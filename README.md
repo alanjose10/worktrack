@@ -2,6 +2,48 @@
 
 WorkTrack is a command-line interface (CLI) tool designed to help you keep track of your daily tasks, manage your to-do list, generate reports of your completed work, and summarize your activities for stand-ups, sprints, and yearly reviews.
 
+## Project Structure
+
+```
+worktrack/
+│
+├── cmd/
+│   └── worktrack/
+│       └── main.go
+├── internal/
+│   ├── add/
+│   │   └── add.go
+│   ├── list/
+│   │   └── list.go
+│   ├── todo/
+│   │   ├── add.go
+│   │   ├── list.go
+│   │   └── remove.go
+│   ├── blocker/
+│   │   ├── add.go
+│   │   ├── list.go
+│   │   └── remove.go
+│   ├── report/
+│   │   └── report.go
+│   ├── sprint/
+│   │   └── sprint.go
+│   ├── standup/
+│   │   └── standup.go
+│   └── storage/
+│       ├── storage.go
+│       └── fileutils.go
+├── pkg/
+│   ├── workitem/
+│   │   └── workitem.go
+│   ├── todoitem/
+│   │   └── todoitem.go
+│   └── blocker/
+│       └── blocker.go
+├── .gitignore
+├── go.mod
+└── README.md
+```
+
 ## To do
 
 ```
