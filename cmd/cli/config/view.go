@@ -1,22 +1,21 @@
 package config
 
 import (
-	"github.com/alanjose10/worktrack/internal/logger"
+	"github.com/alanjose10/worktrack/internal/app"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
+
+var key string
 
 var viewCmd = &cobra.Command{
 	Use:   "view",
 	Short: "View the app configuration file contents at $HOME/.worktrack/config.yaml",
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Info("View config command called")
-		logger.Debug(viper.GetString("sprint.start_date"))
-		logger.Debug(viper.GetString("sprint.duration"))
-
+		app := &app.Application{}
+		app.GetConfigFileValueByKey(key)
 	},
 }
 
 func init() {
-	ConfigCmd.AddCommand(viewCmd)
+	viewCmd.Flags().StringVarP(&key, "key", "k", "", "Key to view")
 }
