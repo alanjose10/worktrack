@@ -14,8 +14,8 @@ type App struct {
 
 func New() (*App, error) {
 
-	c, err := config.Load()
-	if err != nil {
+	c := config.NewConfig()
+	if err := c.Load(); err != nil {
 		return nil, err
 	}
 

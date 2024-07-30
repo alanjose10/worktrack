@@ -1,99 +1,101 @@
 package worktrack
 
 import (
+	"bufio"
+	"fmt"
+	"io"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/alanjose10/worktrack/internal/helpers"
+	"github.com/alanjose10/worktrack/internal/logger"
 )
 
-// func (app *App) GetConfigFileValueByKey(key string) {
-// 	value := app.viper.GetString(key)
-// 	if value == "" {
-// 		fmt.Printf("%s not found in config file\n", key)
-// 	} else {
-// 		fmt.Printf("%s: %s\n", key, app.viper.GetString(key))
-// 	}
-// }
+func (app *App) GetConfigFile() {
+	f, err := os.Open(app.Config.Location)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	defer f.Close()
+	io.Copy(app.Out, f)
+}
 
-// func (app *App) InitialiseConfigFile() {
+func (app *App) InitialiseConfig() {
 
-// 	configFilePath := helpers.GetConfigFilePath()
-// 	// Create config file if it does not exist
-// 	helpers.CreateFileIfNotExists(configFilePath)
+	reader := bufio.NewReader(os.Stdin)
 
-// 	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Fprintf(app.Out, "Log level? [%s] (Allowed values are debug, info, warning, error, fatal): ", app.Config.LogLevel)
+		logLevel, _ := reader.ReadString('\n')
+		logLevel = strings.TrimSpace(logLevel)
+		if logLevel == "" {
+			break
+		} else {
+			if logLevelIsValid(logLevel) {
+				app.Config.LogLevel = logLevel
+				break
+			} else {
+				fmt.Fprintf(app.Out, "%s is invalid. Please enter a valid value\n", logLevel)
+			}
+		}
+	}
 
-// 	for {
-// 		fmt.Printf("Log level? [%s] (Allowed values are debug, info, warning, error, fatal): ", app.viper.GetString("log.level"))
-// 		logLevel, _ := reader.ReadString('\n')
-// 		logLevel = strings.TrimSpace(logLevel)
-// 		if logLevel == "" {
-// 			break
-// 		} else {
-// 			if logLevelIsValid(logLevel) {
-// 				app.viper.Set("log.level", logLevel)
-// 				break
-// 			} else {
-// 				fmt.Printf("%s is invalid. Please enter a valid value\n", logLevel)
-// 			}
-// 		}
-// 	}
+	for {
+		fmt.Fprintf(app.Out, "Start date of any sprint? [%s] (DD-MM-YYYY): ", app.Config.Sprint.StartDate)
+		sprintStartDate, _ := reader.ReadString('\n')
+		sprintStartDate = strings.TrimSpace(sprintStartDate)
+		if sprintStartDate == "" {
+			break
+		} else {
+			if sprintStartDateIsValid(sprintStartDate) {
+				app.Config.Sprint.StartDate = sprintStartDate
+				break
+			} else {
+				fmt.Fprintf(app.Out, "%s is invalid. Please enter a valid value\n", sprintStartDate)
+			}
+		}
+	}
 
-// 	for {
-// 		fmt.Printf("Start date of any sprint? [%s] (DD-MM-YYYY): ", app.viper.GetString("sprint.start_date"))
-// 		sprintStartDate, _ := reader.ReadString('\n')
-// 		sprintStartDate = strings.TrimSpace(sprintStartDate)
-// 		if sprintStartDate == "" {
-// 			break
-// 		} else {
-// 			if sprintStartDateIsValid(sprintStartDate) {
-// 				app.viper.Set("sprint.start_date", sprintStartDate)
-// 				break
-// 			} else {
-// 				fmt.Printf("%s is invalid. Please enter a valid value\n", sprintStartDate)
-// 			}
-// 		}
-// 	}
+	for {
+		fmt.Fprintf(app.Out, "Number of days in a sprint? [%d] (in days): ", app.Config.Sprint.Duration)
+		sprintDuration, _ := reader.ReadString('\n')
+		sprintDuration = strings.TrimSpace(sprintDuration)
+		if sprintDuration == "" {
+			break
+		} else {
+			if n, ok := sprintDurationIsValid(sprintDuration); ok {
+				app.Config.Sprint.Duration = n
+				break
+			} else {
+				fmt.Fprintf(app.Out, "%s is invalid. Please enter a valid value\n", sprintDuration)
+			}
+		}
+	}
 
-// 	for {
-// 		fmt.Printf("Number of days in a sprint? [%s] (in days): ", app.viper.GetString("sprint.duration"))
-// 		sprintDuration, _ := reader.ReadString('\n')
-// 		sprintDuration = strings.TrimSpace(sprintDuration)
-// 		if sprintDuration == "" {
-// 			break
-// 		} else {
-// 			if sprintDurationIsValid(sprintDuration) {
-// 				app.viper.Set("sprint.duration", sprintDuration)
-// 				break
-// 			} else {
-// 				fmt.Printf("%s is invalid. Please enter a valid value\n", sprintDuration)
-// 			}
-// 		}
-// 	}
+	for {
+		fmt.Fprintf(app.Out, "Frequency of standup meetings? [%d] (in days): ", app.Config.Standup.Frequency)
+		standupFrequency, _ := reader.ReadString('\n')
+		standupFrequency = strings.TrimSpace(standupFrequency)
+		if standupFrequency == "" {
+			break
+		} else {
+			if n, ok := standupFrequencyIsValid(standupFrequency); ok {
+				app.Config.Standup.Frequency = n
+				break
+			} else {
+				fmt.Fprintf(app.Out, "%s is invalid. Please enter a valid value\n", standupFrequency)
+			}
+		}
+	}
 
-// 	for {
-// 		fmt.Printf("Frequency of standup meetings? [%s] (in days): ", app.viper.GetString("standup.frequency"))
-// 		standupFrequency, _ := reader.ReadString('\n')
-// 		standupFrequency = strings.TrimSpace(standupFrequency)
-// 		if standupFrequency == "" {
-// 			break
-// 		} else {
-// 			if standupFrequencyIsValid(standupFrequency) {
-// 				app.viper.Set("standup.frequency", standupFrequency)
-// 				break
-// 			} else {
-// 				fmt.Printf("%s is invalid. Please enter a valid value\n", standupFrequency)
-// 			}
-// 		}
-// 	}
+	if err := app.Config.Save(); err != nil {
+		logger.Fatal(err)
+	} else {
+		fmt.Fprintf(app.Out, "Config file at [%s] updated successfully\n", app.Config.Location)
+	}
 
-// 	if err := app.viper.WriteConfig(); err != nil {
-// 		panic(err)
-// 	} else {
-// 		fmt.Println("Config file created/updated at", configFilePath)
-// 	}
-
-// }
+}
 
 func logLevelIsValid(logLevel string) bool {
 	switch logLevel {
@@ -114,20 +116,20 @@ func sprintStartDateIsValid(sprintStartDate string) bool {
 	return true
 }
 
-func sprintDurationIsValid(sprintDuration string) bool {
+func sprintDurationIsValid(sprintDuration string) (int, bool) {
 	if n, ok := helpers.IsNumber(sprintDuration); ok {
 		if helpers.NumberIsInRange(n, 5, 20) {
-			return true
+			return n, true
 		}
 	}
-	return false
+	return 0, false
 }
 
-func standupFrequencyIsValid(standupFrequency string) bool {
+func standupFrequencyIsValid(standupFrequency string) (int, bool) {
 	if n, ok := helpers.IsNumber(standupFrequency); ok {
 		if helpers.NumberIsInRange(n, 1, 7) {
-			return true
+			return n, true
 		}
 	}
-	return false
+	return 0, false
 }
