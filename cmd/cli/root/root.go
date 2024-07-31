@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/alanjose10/worktrack/cmd/cli/config"
+	"github.com/alanjose10/worktrack/cmd/cli/work"
 	"github.com/alanjose10/worktrack/internal/worktrack"
 	"github.com/spf13/cobra"
 )
@@ -20,6 +21,7 @@ func BuildRootCommand(app *worktrack.App) *cobra.Command {
 	}
 
 	command.AddCommand(config.BuildConfigCommand(app))
+	command.AddCommand(work.BuildAddCommand(app))
 	return command
 
 }
