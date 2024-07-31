@@ -1,5 +1,7 @@
 # WorkTrack
 
+# Work In Progress
+
 WorkTrack is a command-line interface (CLI) tool designed to help you keep track of your daily tasks, manage your to-do list, generate reports of your completed work, and summarize your activities for stand-ups, sprints, and yearly reviews.
 
 ## Tech Stack
@@ -7,6 +9,12 @@ WorkTrack is a command-line interface (CLI) tool designed to help you keep track
 - [Go](https://golang.org/)
 - [Cobra](https://github.com/spf13/cobra)
 - [Viper](https://github.com/spf13/viper?tab=readme-ov-file)
+
+## To Do
+
+- Use https://github.com/dustin/go-humanize to format dates, etc.
+- Support json output format via --json flag
+- Custom help output
 
 ## Project Structure
 
