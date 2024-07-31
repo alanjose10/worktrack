@@ -1,5 +1,7 @@
 # WorkTrack
 
+# Work In Progress
+
 WorkTrack is a command-line interface (CLI) tool designed to help you keep track of your daily tasks, manage your to-do list, generate reports of your completed work, and summarize your activities for stand-ups, sprints, and yearly reviews.
 
 ## Tech Stack
