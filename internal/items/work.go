@@ -1,15 +1,15 @@
 package items
 
 import (
-	"fmt"
+	"encoding/json"
 	"time"
 
 	"github.com/alanjose10/worktrack/internal/file"
 	"github.com/alanjose10/worktrack/internal/helpers"
-	"github.com/alanjose10/worktrack/internal/logger"
 )
 
 type WorkItem struct {
+	Id        string `json:"id"`
 	Group     string `json:"group"`
 	Content   string `json:"content"`
 	Timestamp int64  `json:"timestamp"`
@@ -17,17 +17,10 @@ type WorkItem struct {
 
 func NewWork(group, content string, ts time.Time) *WorkItem {
 	return &WorkItem{
+		Id:        helpers.GetUUID(),
 		Group:     group,
 		Content:   content,
 		Timestamp: ts.Unix(),
-	}
-}
-
-func (work *WorkItem) JsonItem() map[string]interface{} {
-	return map[string]interface{}{
-		"group":     work.Group,
-		"content":   work.Content,
-		"timestamp": work.Timestamp,
 	}
 }
 
@@ -37,8 +30,31 @@ func (work *WorkItem) Add(filePath string) error {
 	if err != nil {
 		return err
 	}
-	logger.Debug(fmt.Sprintf("%+v", file))
+	data, err := file.Read()
+	if err != nil {
+		return err
+	}
 
+	if helpers.RemoveWhiteSpaces(string(data)) == "" {
+		data = []byte("[]")
+	}
+
+	var workItems []WorkItem
+	err = json.Unmarshal(data, &workItems)
+	if err != nil {
+		return err
+	}
+
+	workItems = append(workItems, *work)
+
+	data, err = json.Marshal(workItems)
+	if err != nil {
+		return err
+
+	}
+	if err := file.Write(data); err != nil {
+		return err
+	}
 	return nil
 }
 

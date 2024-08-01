@@ -1,6 +1,7 @@
 package work
 
 import (
+	"github.com/alanjose10/worktrack/internal/logger"
 	"github.com/alanjose10/worktrack/internal/worktrack"
 	"github.com/spf13/cobra"
 )
@@ -9,7 +10,7 @@ func BuildAddCommand(app *worktrack.App) *cobra.Command {
 	command := &cobra.Command{
 		Use:       "add",
 		Short:     "Add a new work entry",
-		Long:      `Add a new work entry.`,
+		Long:      `Add a new work entry`,
 		ValidArgs: []string{"group", "content"},
 		Args:      cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -27,7 +28,7 @@ func BuildAddCommand(app *worktrack.App) *cobra.Command {
 			}
 
 			if err := app.AddWork(group, content); err != nil {
-				cmd.PrintErr(err)
+				logger.Fatal(err)
 			}
 		},
 	}
