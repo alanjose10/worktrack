@@ -29,3 +29,7 @@ func GetMonth(t time.Time) int {
 func GetDay(t time.Time) int {
 	return t.Day()
 }
+
+func ParseDate(date string) (time.Time, error) {
+	return time.Parse("02-01-2006", date)
+}
