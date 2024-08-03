@@ -1,6 +1,8 @@
 package config
 
 import (
+	"path/filepath"
+
 	"github.com/alanjose10/worktrack/internal/helpers"
 	"github.com/alanjose10/worktrack/internal/logger"
 	"github.com/spf13/viper"
@@ -16,7 +18,6 @@ type Standup struct {
 }
 
 type Config struct {
-	Location string
 	LogLevel string  `mapstructure:"log_level"`
 	Sprint   Sprint  `mapstructure:"sprint"`
 	Standup  Standup `mapstructure:"standup"`
@@ -24,7 +25,6 @@ type Config struct {
 
 func NewConfig() *Config {
 	return &Config{
-		Location: helpers.GetConfigFilePath(),
 		LogLevel: "info",
 		Sprint: Sprint{
 			StartDate: "29-07-2024",
@@ -56,6 +56,9 @@ func (c *Config) Load() error {
 func (c *Config) Save() error {
 
 	dir := helpers.GetWorktrackDir()
+	helpers.CreateDirectoryIfNotExists(dir)
+	helpers.CreateFileIfNotExists(filepath.Join(dir, "config"))
+
 	v := viper.New()
 	v.SetConfigName("config")
 	v.SetConfigType("toml")

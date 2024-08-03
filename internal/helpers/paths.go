@@ -1,8 +1,10 @@
 package helpers
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func getHomeDir() string {
@@ -21,10 +23,18 @@ func GetConfigFilePath() string {
 	return filepath.Join(GetWorktrackDir(), "config")
 }
 
-func CreateDirectoryIfNotExists(dirPath string) {
+func GetStorageDir(ts time.Time) string {
+	return filepath.Join(
+		GetWorktrackDir(),
+		fmt.Sprintf("%d/%d/%d", GetYear(ts), GetMonth(ts), GetDay(ts)),
+	)
+}
+
+func CreateDirectoryIfNotExists(dirPath string) error {
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func CreateFileIfNotExists(filePath string) {

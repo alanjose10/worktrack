@@ -13,7 +13,7 @@ import (
 )
 
 func (app *App) GetConfigFile() {
-	f, err := os.Open(app.Config.Location)
+	f, err := os.Open(helpers.GetConfigFilePath())
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -92,7 +92,7 @@ func (app *App) InitialiseConfig() {
 	if err := app.Config.Save(); err != nil {
 		logger.Fatal(err)
 	} else {
-		fmt.Fprintf(app.Out, "Config file at [%s] updated successfully\n", app.Config.Location)
+		fmt.Fprintf(app.Out, "Config file at [%s] updated successfully\n", helpers.GetConfigFilePath())
 	}
 
 }

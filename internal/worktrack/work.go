@@ -1,8 +1,19 @@
 package worktrack
 
-import "fmt"
+import (
+	"time"
 
-func (app *App) AddWork(group, content string) error {
-	fmt.Fprintf(app.Out, "%s: %s\n", group, content)
+	"github.com/alanjose10/worktrack/internal/items"
+)
+
+func (app *App) AddWork(group, content string, ts time.Time) error {
+
+	// ts := helpers.GetCurrentDate()
+	work := items.NewWork(group, content, ts)
+
+	if err := work.Add(); err != nil {
+		return err
+	}
+
 	return nil
 }
