@@ -2,6 +2,7 @@ package items
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"time"
 
 	"github.com/alanjose10/worktrack/internal/file"
@@ -24,13 +25,16 @@ func NewWork(group, content string, ts time.Time) *WorkItem {
 	}
 }
 
-func (work *WorkItem) Add(filePath string) error {
-
-	file, err := file.Get(helpers.GetTimeFromUnix(work.Timestamp), "work.json")
-	if err != nil {
+func (work *WorkItem) Add() error {
+	tsUnix := helpers.GetTimeFromUnix(work.Timestamp)
+	location := helpers.GetStorageDir(tsUnix)
+	if err := helpers.CreateDirectoryIfNotExists(location); err != nil {
 		return err
 	}
-	data, err := file.Read()
+	path := filepath.Join(location, "work.json")
+	helpers.CreateFileIfNotExists(path)
+
+	data, err := file.ReadFile(path)
 	if err != nil {
 		return err
 	}
@@ -52,7 +56,7 @@ func (work *WorkItem) Add(filePath string) error {
 		return err
 
 	}
-	if err := file.Write(data); err != nil {
+	if err := file.WriteFile(path, data); err != nil {
 		return err
 	}
 	return nil
