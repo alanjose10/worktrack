@@ -22,6 +22,7 @@ func BuildRootCommand(app *worktrack.App) *cobra.Command {
 
 	command.AddCommand(config.BuildConfigCommand(app))
 	command.AddCommand(work.BuildAddCommand(app))
+	command.AddCommand(work.BuildGetCommand(app))
 	return command
 
 }

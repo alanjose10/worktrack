@@ -62,6 +62,32 @@ func (work *WorkItem) Add() error {
 	return nil
 }
 
+func GetWork(ts time.Time) ([]WorkItem, error) {
+	location := helpers.GetStorageDir(ts)
+	if err := helpers.CreateDirectoryIfNotExists(location); err != nil {
+		return nil, err
+	}
+	path := filepath.Join(location, "work.json")
+	helpers.CreateFileIfNotExists(path)
+
+	data, err := file.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if helpers.RemoveWhiteSpaces(string(data)) == "" {
+		data = []byte("[]")
+	}
+
+	var workItems []WorkItem
+	err = json.Unmarshal(data, &workItems)
+	if err != nil {
+		return nil, err
+	}
+
+	return workItems, nil
+}
+
 // Write function to read all work files from a given date
 
 // Write function to read all work files from a given date range

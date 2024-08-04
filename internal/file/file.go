@@ -1,15 +1,11 @@
 package file
 
 import (
-	"fmt"
 	"io"
 	"os"
-
-	"github.com/alanjose10/worktrack/internal/logger"
 )
 
 func ReadFile(path string) ([]byte, error) {
-	logger.Debug(fmt.Sprintf("Reading from %s", path))
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -25,7 +21,6 @@ func ReadFile(path string) ([]byte, error) {
 }
 
 func WriteFile(path string, data []byte) error {
-	logger.Debug(fmt.Sprintf("Writing to %s", path))
 
 	f, err := os.OpenFile(path, os.O_WRONLY, 0644)
 	if err != nil {

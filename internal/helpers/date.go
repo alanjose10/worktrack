@@ -3,7 +3,7 @@ package helpers
 import "time"
 
 func GetHumanDate(t time.Time) string {
-	return t.Format("2 Jan 2006 at 3:04 PM")
+	return t.Format("2 Jan 2006")
 }
 
 func GetTimeFromUnix(ts int64) time.Time {
@@ -12,6 +12,10 @@ func GetTimeFromUnix(ts int64) time.Time {
 
 func GetCurrentDate() time.Time {
 	return time.Now()
+}
+
+func GetYesterdayDate() time.Time {
+	return GetCurrentDate().AddDate(0, 0, -1)
 }
 
 func ConvertToUnix(t time.Time) int64 {

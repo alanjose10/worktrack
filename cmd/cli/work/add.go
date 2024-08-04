@@ -1,7 +1,6 @@
 package work
 
 import (
-	"errors"
 	"time"
 
 	"github.com/alanjose10/worktrack/internal/helpers"
@@ -24,11 +23,6 @@ func BuildAddCommand(app *worktrack.App) *cobra.Command {
 		Args:      cobra.RangeArgs(1, 2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 
-			// Do not allow both date and yesterday flags to be set
-			if date != "" && yesterday {
-				return errors.New("only one of date or yesterday flags can be set")
-			}
-
 			// Validate the date flag
 			var err error
 			if date != "" {
@@ -43,8 +37,7 @@ func BuildAddCommand(app *worktrack.App) *cobra.Command {
 
 			// If yesterday flag is set, subtract 24 hours from the current date
 			if yesterday {
-				ts = helpers.GetCurrentDate()
-				ts = ts.AddDate(0, 0, -1)
+				ts = helpers.GetYesterdayDate()
 			}
 
 			return nil
@@ -72,6 +65,8 @@ func BuildAddCommand(app *worktrack.App) *cobra.Command {
 	command.Flags().StringVarP(&date, "date", "d", "", "Date of the work entry")
 
 	command.Flags().BoolVarP(&yesterday, "yesterday", "y", false, "Add work entry for yesterday")
+
+	command.MarkFlagsMutuallyExclusive("date", "yesterday")
 
 	return command
 }
