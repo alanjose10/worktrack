@@ -1,10 +1,10 @@
-package components
+package ui
 
 import "github.com/charmbracelet/lipgloss"
 
 var (
 	TextErrorStyle = lipgloss.NewStyle().Bold(true).
-		Foreground(red).
+		Foreground(errorC).
 		PaddingTop(1).
 		PaddingBottom(1)
 )

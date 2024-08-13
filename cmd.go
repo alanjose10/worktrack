@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
-	"github.com/alanjose10/worktrack/internal/components"
+	"github.com/alanjose10/worktrack/internal/models"
+	"github.com/alanjose10/worktrack/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -21,6 +23,8 @@ func buildRootCommand(app *application) *cobra.Command {
 	command.AddCommand(buildWhereCommand(app))
 	command.AddCommand(buildAddCommand(app))
 	command.AddCommand(buildListCommand(app))
+	command.AddCommand(buildUpdateCommand(app))
+	command.AddCommand(buildDeleteCommand(app))
 
 	return command
 
@@ -72,7 +76,7 @@ func buildListCommand(app *application) *cobra.Command {
 			}
 
 			if len(tasks) == 0 {
-				fmt.Println(components.TextError("No tasks found! Add a task using `worktrack add` and try again."))
+				fmt.Println(ui.TextError("No tasks found! Add a task using `worktrack add` and try again."))
 				return nil
 			}
 
@@ -89,9 +93,84 @@ func buildListCommand(app *application) *cobra.Command {
 				})
 			}
 
-			t := components.Table(columns, rows)
+			t := ui.TasksTable(columns, rows)
 			fmt.Println(t)
 			return nil
+		},
+	}
+
+	return command
+}
+
+func buildUpdateCommand(app *application) *cobra.Command {
+
+	var project string
+	var name string
+	var status int
+
+	command := &cobra.Command{
+		Use:   "update ID",
+		Short: "Update a task by ID",
+		Args:  cobra.ExactArgs(1),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+
+			if status != -1 {
+				if ok := models.IsValidState(status); !ok {
+					return fmt.Errorf("invalid status: %v. must be one of (0 - todo, 1 - in progress, 2 - done, 3 - blocked)", status)
+				}
+			}
+
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			id, err := strconv.Atoi(args[0])
+			if err != nil {
+				return err
+			}
+
+			task, err := app.taskModel.GetById(id)
+			if err != nil {
+				return err
+			}
+
+			if project != "" {
+				task.Project = project
+			}
+
+			if name != "" {
+				task.Name = name
+			}
+
+			if status != -1 {
+				task.Status = models.State(status).String()
+			}
+
+			return app.taskModel.Update(task)
+		},
+	}
+
+	command.Flags().StringVarP(&project, "project", "p", "", "Name of the project")
+	command.Flags().StringVarP(&name, "name", "n", "", "Name of the task")
+	command.Flags().IntVarP(&status, "status", "s", -1, "Status of the task [0 - todo, 1 - in progress, 2 - done, 3 - blocked]")
+
+	return command
+}
+
+func buildDeleteCommand(app *application) *cobra.Command {
+
+	command := &cobra.Command{
+		Use:   "delete ID",
+		Short: "Delete a task by ID",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			id, err := strconv.Atoi(args[0])
+			if err != nil {
+				return err
+			}
+
+			return app.taskModel.Delete(id)
 		},
 	}
 
