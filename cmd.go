@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
+	"github.com/alanjose10/worktrack/internal/helpers"
 	"github.com/alanjose10/worktrack/internal/models"
 	"github.com/alanjose10/worktrack/internal/ui"
 	"github.com/spf13/cobra"
@@ -80,7 +82,7 @@ func buildListCommand(app *application) *cobra.Command {
 				return nil
 			}
 
-			columns := []string{"ID", "Name", "Project", "Status", "Created At"}
+			columns := []string{"ID", "Name", "Project", "Status", "Created At", "Updated At"}
 			var rows [][]string
 
 			for _, task := range tasks {
@@ -89,7 +91,8 @@ func buildListCommand(app *application) *cobra.Command {
 					task.Name,
 					task.Project,
 					task.Status,
-					task.Created.Format("Mon Jan 2 2006 at 3:04 PM"),
+					helpers.GetHumanDate(task.Created),
+					helpers.GetHumanDate(task.Updated),
 				})
 			}
 
@@ -116,7 +119,8 @@ func buildUpdateCommand(app *application) *cobra.Command {
 
 			if status != -1 {
 				if ok := models.IsValidState(status); !ok {
-					return fmt.Errorf("invalid status: %v. must be one of (0 - todo, 1 - in progress, 2 - done, 3 - blocked)", status)
+					fmt.Println(ui.TextError(fmt.Sprintf("Invalid status: %v. must be one of (0 - todo, 1 - in progress, 2 - done, 3 - blocked)", status)))
+					return errors.New("invalid status")
 				}
 			}
 
@@ -131,7 +135,11 @@ func buildUpdateCommand(app *application) *cobra.Command {
 
 			task, err := app.taskModel.GetById(id)
 			if err != nil {
+				if err == models.ErrTaskNotFound {
+					fmt.Println(ui.TextError(fmt.Sprintf("Could not find task #%d", id)))
+				}
 				return err
+
 			}
 
 			if project != "" {

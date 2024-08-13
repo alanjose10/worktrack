@@ -26,11 +26,11 @@ func TasksTable(columns []string, rows [][]string) string {
 					case "done":
 						return CellStyle.Foreground(success)
 					case "in progress":
-						return CellStyle.Foreground(warning)
-					case "todo":
-						return CellStyle.Foreground(errorC)
-					default:
 						return CellStyle.Foreground(primary)
+					case "todo":
+						return CellStyle.Foreground(warning)
+					case "blocked":
+						return CellStyle.Foreground(errorC)
 					}
 				}
 				return CellStyle.Foreground(primary)

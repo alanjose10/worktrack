@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 	"time"
@@ -31,8 +32,11 @@ type Task struct {
 	Project string
 	Status  string
 	Created time.Time
+	Updated time.Time
+	Notes   string
 }
 
+// TODO: Implement the merge method
 func (t *Task) merge(other Task) error {
 
 	tValues := reflect.ValueOf(&t).Elem()
@@ -59,9 +63,11 @@ func (tm *TaskModel) TableExists() bool {
 func (tm *TaskModel) CreateTable() error {
 	sqlString := `CREATE TABLE tasks ("id" INTEGER PRIMARY KEY AUTOINCREMENT, 
 					"name" TEXT NOT NULL, 
-					"project" TEXT,
+					"project" TEXT NOT NULL,
 					"status" TEXT NOT NULL,
-					"created" DATETIME )`
+					"created" DATETIME NOT NULL,
+					"updated" DATETIME DEFAULT NULL,
+					"notes" TEXT DEFAULT NULL)`
 	if _, err := tm.Db.Exec(sqlString); err != nil {
 		return err
 	}
@@ -93,10 +99,20 @@ func (tm *TaskModel) List() ([]Task, error) {
 	var tasks []Task
 	for rows.Next() {
 		var t Task
-		err := rows.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created)
+		var updated sql.NullTime
+		var notes sql.NullString
+		err := rows.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created, &updated, &notes)
 		if err != nil {
+			fmt.Println(err)
 			return nil, err
 		}
+		if updated.Valid {
+			t.Updated = updated.Time
+		}
+		if notes.Valid {
+			t.Notes = notes.String
+		}
+
 		tasks = append(tasks, t)
 	}
 	return tasks, nil
@@ -106,9 +122,20 @@ func (tm *TaskModel) GetById(id int) (Task, error) {
 	sqlSmt := `SELECT * FROM tasks WHERE id = ?`
 	row := tm.Db.QueryRow(sqlSmt, id)
 	var t Task
-	err := row.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created)
+	var updated sql.NullTime
+	var notes sql.NullString
+	err := row.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created, &updated, &notes)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Task{}, ErrTaskNotFound
+		}
 		return Task{}, err
+	}
+	if updated.Valid {
+		t.Updated = updated.Time
+	}
+	if notes.Valid {
+		t.Notes = notes.String
 	}
 	return t, nil
 }
@@ -124,7 +151,7 @@ func (tm *TaskModel) GetByStatus(status State) ([]Task, error) {
 	var tasks []Task
 	for rows.Next() {
 		var t Task
-		err := rows.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created)
+		err := rows.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created, &t.Updated, &t.Notes)
 		if err != nil {
 			return nil, err
 		}
@@ -135,8 +162,8 @@ func (tm *TaskModel) GetByStatus(status State) ([]Task, error) {
 
 func (tm *TaskModel) Update(t Task) error {
 
-	sqlSmt := `UPDATE tasks SET name = ?, project = ?, status = ? WHERE id = ?`
+	sqlSmt := `UPDATE tasks SET name = ?, project = ?, status = ?, updated = ?, notes = ? WHERE id = ?`
 
-	_, err := tm.Db.Exec(sqlSmt, t.Name, t.Project, t.Status, t.ID)
+	_, err := tm.Db.Exec(sqlSmt, t.Name, t.Project, t.Status, time.Now(), t.Notes, t.ID)
 	return err
 }

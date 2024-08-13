@@ -3,7 +3,10 @@ package helpers
 import "time"
 
 func GetHumanDate(t time.Time) string {
-	return t.Format("2 Jan 2006")
+	if t.IsZero() {
+		return "NULL"
+	}
+	return t.Format("Mon 2 Jan 2006")
 }
 
 func GetTimeFromUnix(ts int64) time.Time {
