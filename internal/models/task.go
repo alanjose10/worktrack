@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"reflect"
 	"time"
 )
 
@@ -33,19 +32,6 @@ type Task struct {
 	Status  string
 	Created time.Time
 	Updated time.Time
-	Notes   string
-}
-
-// TODO: Implement the merge method
-func (t *Task) merge(other Task) error {
-
-	tValues := reflect.ValueOf(&t).Elem()
-	oValues := reflect.ValueOf(&other).Elem()
-
-	fmt.Println(tValues)
-	fmt.Println(oValues)
-
-	return nil
 }
 
 type TaskModel struct {
@@ -66,8 +52,7 @@ func (tm *TaskModel) CreateTable() error {
 					"project" TEXT NOT NULL,
 					"status" TEXT NOT NULL,
 					"created" DATETIME NOT NULL,
-					"updated" DATETIME DEFAULT NULL,
-					"notes" TEXT DEFAULT NULL)`
+					"updated" DATETIME DEFAULT NULL)`
 	if _, err := tm.Db.Exec(sqlString); err != nil {
 		return err
 	}
@@ -100,17 +85,13 @@ func (tm *TaskModel) List() ([]Task, error) {
 	for rows.Next() {
 		var t Task
 		var updated sql.NullTime
-		var notes sql.NullString
-		err := rows.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created, &updated, &notes)
+		err := rows.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created, &updated)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
 		}
 		if updated.Valid {
 			t.Updated = updated.Time
-		}
-		if notes.Valid {
-			t.Notes = notes.String
 		}
 
 		tasks = append(tasks, t)
@@ -123,8 +104,7 @@ func (tm *TaskModel) GetById(id int) (Task, error) {
 	row := tm.Db.QueryRow(sqlSmt, id)
 	var t Task
 	var updated sql.NullTime
-	var notes sql.NullString
-	err := row.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created, &updated, &notes)
+	err := row.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created, &updated)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Task{}, ErrTaskNotFound
@@ -133,9 +113,6 @@ func (tm *TaskModel) GetById(id int) (Task, error) {
 	}
 	if updated.Valid {
 		t.Updated = updated.Time
-	}
-	if notes.Valid {
-		t.Notes = notes.String
 	}
 	return t, nil
 }
@@ -151,7 +128,7 @@ func (tm *TaskModel) GetByStatus(status State) ([]Task, error) {
 	var tasks []Task
 	for rows.Next() {
 		var t Task
-		err := rows.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created, &t.Updated, &t.Notes)
+		err := rows.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created, &t.Updated)
 		if err != nil {
 			return nil, err
 		}
@@ -162,8 +139,8 @@ func (tm *TaskModel) GetByStatus(status State) ([]Task, error) {
 
 func (tm *TaskModel) Update(t Task) error {
 
-	sqlSmt := `UPDATE tasks SET name = ?, project = ?, status = ?, updated = ?, notes = ? WHERE id = ?`
+	sqlSmt := `UPDATE tasks SET name = ?, project = ?, status = ?, updated = ? WHERE id = ?`
 
-	_, err := tm.Db.Exec(sqlSmt, t.Name, t.Project, t.Status, time.Now(), t.Notes, t.ID)
+	_, err := tm.Db.Exec(sqlSmt, t.Name, t.Project, t.Status, time.Now(), t.ID)
 	return err
 }

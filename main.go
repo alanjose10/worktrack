@@ -12,8 +12,9 @@ import (
 )
 
 type application struct {
-	dataPath  string
-	taskModel *models.TaskModel
+	dataPath   string
+	taskModel  *models.TaskModel
+	notesModel *models.NoteModel
 }
 
 func setupPath() string {
@@ -47,7 +48,7 @@ func setupPath() string {
 }
 
 func openDB(path string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", filepath.Join(path, "tasks.db"))
+	db, err := sql.Open("sqlite3", filepath.Join(path, "data.db"))
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +62,11 @@ func openDB(path string) (*sql.DB, error) {
 func (app *application) initializeDB() error {
 	if !app.taskModel.TableExists() {
 		if err := app.taskModel.CreateTable(); err != nil {
+			return err
+		}
+	}
+	if !app.notesModel.TableExists() {
+		if err := app.notesModel.CreateTable(); err != nil {
 			return err
 		}
 	}
@@ -78,8 +84,9 @@ func main() {
 	defer db.Close()
 
 	app := &application{
-		dataPath:  path,
-		taskModel: &models.TaskModel{Db: db},
+		dataPath:   path,
+		taskModel:  &models.TaskModel{Db: db},
+		notesModel: &models.NoteModel{Db: db},
 	}
 	if err := app.initializeDB(); err != nil {
 		log.Fatal(err)
