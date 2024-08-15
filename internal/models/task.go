@@ -99,6 +99,37 @@ func (tm *TaskModel) List() ([]Task, error) {
 	return tasks, nil
 }
 
+func (tm *TaskModel) ListByDate(date time.Time) ([]Task, error) {
+
+	from := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.Local)
+	to := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 0, time.Local)
+
+	sqlSmt := `SELECT * FROM tasks WHERE created BETWEEN ? AND ? OR updated BETWEEN ? AND ? ORDER BY ID DESC`
+	rows, err := tm.Db.Query(sqlSmt, from, to, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tasks []Task
+	for rows.Next() {
+		var t Task
+		var updated sql.NullTime
+		err := rows.Scan(&t.ID, &t.Name, &t.Project, &t.Status, &t.Created, &updated)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, ErrTaskNotFound
+			}
+			return nil, err
+		}
+		if updated.Valid {
+			t.Updated = updated.Time
+		}
+		tasks = append(tasks, t)
+	}
+	return tasks, nil
+}
+
 func (tm *TaskModel) GetById(id int) (Task, error) {
 	sqlSmt := `SELECT * FROM tasks WHERE id = ?`
 	row := tm.Db.QueryRow(sqlSmt, id)

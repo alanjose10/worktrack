@@ -13,6 +13,7 @@ import (
 
 type application struct {
 	dataPath   string
+	workModel  *models.WorkModel
 	taskModel  *models.TaskModel
 	notesModel *models.NoteModel
 }
@@ -60,16 +61,23 @@ func openDB(path string) (*sql.DB, error) {
 }
 
 func (app *application) initializeDB() error {
-	if !app.taskModel.TableExists() {
-		if err := app.taskModel.CreateTable(); err != nil {
+
+	if !app.workModel.TableExists() {
+		if err := app.workModel.CreateTable(); err != nil {
 			return err
 		}
 	}
-	if !app.notesModel.TableExists() {
-		if err := app.notesModel.CreateTable(); err != nil {
-			return err
-		}
-	}
+
+	// if !app.taskModel.TableExists() {
+	// 	if err := app.taskModel.CreateTable(); err != nil {
+	// 		return err
+	// 	}
+	// }
+	// if !app.notesModel.TableExists() {
+	// 	if err := app.notesModel.CreateTable(); err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 
@@ -85,6 +93,7 @@ func main() {
 
 	app := &application{
 		dataPath:   path,
+		workModel:  &models.WorkModel{Db: db},
 		taskModel:  &models.TaskModel{Db: db},
 		notesModel: &models.NoteModel{Db: db},
 	}
