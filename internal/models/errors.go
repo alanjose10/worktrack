@@ -3,5 +3,5 @@ package models
 import "errors"
 
 var (
-	ErrTaskNotFound = errors.New("task not found")
+	ErrItemNotFound = errors.New("item not found")
 )

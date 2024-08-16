@@ -12,10 +12,10 @@ import (
 )
 
 type application struct {
-	dataPath   string
-	workModel  *models.WorkModel
-	taskModel  *models.TaskModel
-	notesModel *models.NoteModel
+	dataPath     string
+	workModel    *models.WorkModel
+	todoModel    *models.TodoModel
+	blockerModel *models.BlockerModel
 }
 
 func setupPath() string {
@@ -68,16 +68,18 @@ func (app *application) initializeDB() error {
 		}
 	}
 
-	// if !app.taskModel.TableExists() {
-	// 	if err := app.taskModel.CreateTable(); err != nil {
-	// 		return err
-	// 	}
-	// }
-	// if !app.notesModel.TableExists() {
-	// 	if err := app.notesModel.CreateTable(); err != nil {
-	// 		return err
-	// 	}
-	// }
+	if !app.todoModel.TableExists() {
+		if err := app.todoModel.CreateTable(); err != nil {
+			return err
+		}
+	}
+
+	if !app.blockerModel.TableExists() {
+		if err := app.blockerModel.CreateTable(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -92,10 +94,10 @@ func main() {
 	defer db.Close()
 
 	app := &application{
-		dataPath:   path,
-		workModel:  &models.WorkModel{Db: db},
-		taskModel:  &models.TaskModel{Db: db},
-		notesModel: &models.NoteModel{Db: db},
+		dataPath:     path,
+		workModel:    &models.WorkModel{Db: db},
+		todoModel:    &models.TodoModel{Db: db},
+		blockerModel: &models.BlockerModel{Db: db},
 	}
 	if err := app.initializeDB(); err != nil {
 		log.Fatal(err)

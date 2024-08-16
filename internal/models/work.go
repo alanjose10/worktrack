@@ -59,7 +59,7 @@ func (m *WorkModel) List(date time.Time) ([]Work, error) {
 	from := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.Local)
 	to := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 0, time.Local)
 
-	sqlSmt := `SELECT * FROM work WHERE added BETWEEN ? AND ?`
+	sqlSmt := `SELECT id, content, added FROM work WHERE added BETWEEN ? AND ?`
 	rows, err := m.Db.Query(sqlSmt, from, to)
 
 	if err != nil {
