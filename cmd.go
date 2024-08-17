@@ -117,17 +117,7 @@ func buildStandupCommand(app *application) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			todos, err := app.todoModel.List()
-			if err != nil {
-				return err
-			}
-
-			blockers, err := app.blockerModel.List()
-			if err != nil {
-				return err
-			}
-
-			fmt.Println(ui.PrintStandupReport(goBack, todos, blockers))
+			fmt.Println(app.printStandupReport(goBack))
 
 			return nil
 		},
