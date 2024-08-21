@@ -3,10 +3,13 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/alanjose10/worktrack/internal/helpers"
 	"github.com/alanjose10/worktrack/internal/ui"
+	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 )
 
@@ -54,10 +57,36 @@ func buildAddCommand(app *application) *cobra.Command {
 	var todo bool
 	var blocker bool
 
+	examples := `
+Add a work item using inline input
+
+	worktrack add "Worked on documenting the APIs"
+
+Add a work item via prompt (An input prompt will be provided)
+
+	worktrack add
+
+Add a todo item
+
+	worktrack add --todo
+
+Add a blocker item
+
+	worktrack add --blocker
+
+Add an item for yesterday
+
+	worktrack add -y
+
+Add an item for a specific date
+
+	worktrack add --date 20-10-1994
+	`
+
 	command := &cobra.Command{
 		Use:   "add WORK",
 		Short: "Add details of a work",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 
 			if yesterday {
@@ -75,16 +104,48 @@ func buildAddCommand(app *application) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
+			var textInput string
+			if len(args) == 0 {
+
+				err := huh.NewText().
+					TitleFunc(func() string {
+						if todo {
+							return "Please input the todo item."
+						}
+						if blocker {
+							return "Please enter the blocker details."
+						}
+						return "Please enter the work item details."
+					}, nil).
+					Value(&textInput).
+					Validate(func(s string) error {
+						if strings.TrimSpace(s) == "" {
+							fmt.Println("No input provided.")
+							return fmt.Errorf("no input provided")
+						}
+						return nil
+					}).
+					Run()
+				if err != nil {
+					os.Exit(1)
+				}
+
+			} else {
+				textInput = args[0]
+			}
+
 			if todo {
-				return app.todoModel.Insert(args[0], date)
+				return app.todoModel.Insert(textInput, date)
 			}
 
 			if blocker {
-				return app.blockerModel.Insert(args[0], date)
+				return app.blockerModel.Insert(textInput, date)
 			}
 
-			return app.workModel.Insert(args[0], date)
+			return app.workModel.Insert(textInput, date)
+			// return nil
 		},
+		Example: examples,
 	}
 
 	command.Flags().BoolVarP(&yesterday, "yesterday", "y", false, "Add work for yesterday")
