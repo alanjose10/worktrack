@@ -28,6 +28,8 @@ func buildRootCommand(app *application) *cobra.Command {
 	command.AddCommand(buildAddCommand(app))
 	command.AddCommand(buildStandupCommand(app))
 
+	command.AddCommand(buildListCommand(app))
+
 	return command
 
 }
@@ -185,6 +187,51 @@ func buildStandupCommand(app *application) *cobra.Command {
 	}
 
 	command.Flags().IntVarP(&goBack, "back", "b", 2, "Number of days to go back")
+
+	return command
+}
+
+func buildListCommand(app *application) *cobra.Command {
+
+	var (
+		date time.Time
+		d    int
+		w    int
+		m    int
+		y    int
+	)
+
+	command := &cobra.Command{
+		Use:   "list",
+		Short: "List items",
+		Args:  cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if d > 0 {
+				date = helpers.GetCurrentDate().AddDate(0, 0, -1*d)
+			} else if w > 0 {
+				date = helpers.GetCurrentDate().AddDate(0, 0, -1*w*7)
+			} else if m > 0 {
+				date = helpers.GetCurrentDate().AddDate(0, -1*m, 0)
+			} else if y > 0 {
+				date = helpers.GetCurrentDate().AddDate(-1*y, 0, 0)
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			fmt.Println(helpers.GetHumanDate(date))
+
+			return nil
+		},
+	}
+
+	command.Flags().IntVarP(&d, "days", "d", 0, "Go back n days")
+	command.Flags().IntVarP(&w, "weeks", "w", 0, "Go back n weeks")
+	command.Flags().IntVarP(&m, "months", "m", 0, "Go back n months")
+	command.Flags().IntVarP(&y, "years", "y", 0, "Go back n years")
+
+	command.MarkFlagsOneRequired("days", "weeks", "months", "years")
+	command.MarkFlagsMutuallyExclusive("days", "weeks", "months", "years")
 
 	return command
 }
