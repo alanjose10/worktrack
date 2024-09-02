@@ -219,7 +219,7 @@ func buildListCommand(app *application) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			fmt.Println(helpers.GetHumanDate(date))
+			fmt.Println(app.listItems(helpers.GetCurrentDate(), date))
 
 			return nil
 		},

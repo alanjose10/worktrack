@@ -218,3 +218,18 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Contact
 For questions or suggestions, please open an issue on GitHub.
+
+
+## Todo feature
+
+adding a todo item
+
+worktrack add --todo
+
+edit a todo
+
+worktrack todo
+
+worktrack todo --do
+
+worktrack todo --undo
