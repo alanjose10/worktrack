@@ -3,7 +3,12 @@
 # Installation
 
 ```bash
-go install github.com/alanjose10/worktrack@v1.0.0
+go install github.com/alanjose10/worktrack@<tag-name>
+
+Example:
+go install github.com/alanjose10/worktrack@v1.2.0
+
+
 ```
 
 # Introduction

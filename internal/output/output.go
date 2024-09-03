@@ -130,19 +130,19 @@ func BuildListWorkOutput(from time.Time, to time.Time, workItems []models.Work) 
 		stringBuilder.WriteString(title + "\n")
 	}
 
-	sort.Slice(workItems, func(i, j int) bool {
-		return workItems[i].Added.Before(workItems[j].Added)
-	})
-
-	minDate := workItems[0].Added
-	maxDate := workItems[len(workItems)-1].Added
-
 	// Body
 	{
 		if len(workItems) == 0 {
 			stringBuilder.WriteString("No work items found\n")
 			return stringBuilder.String()
 		}
+
+		sort.Slice(workItems, func(i, j int) bool {
+			return workItems[i].Added.Before(workItems[j].Added)
+		})
+
+		minDate := workItems[0].Added
+		maxDate := workItems[len(workItems)-1].Added
 
 		var groupdWorkItems map[string][]models.Work
 		if maxDate.Sub(minDate) > time.Hour*24*365 {
