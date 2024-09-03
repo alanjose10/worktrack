@@ -12,6 +12,7 @@ import (
 )
 
 type application struct {
+	version      string
 	dataPath     string
 	workModel    *models.WorkModel
 	todoModel    *models.TodoModel
@@ -94,6 +95,7 @@ func main() {
 	defer db.Close()
 
 	app := &application{
+		version:      "1.2.0",
 		dataPath:     path,
 		workModel:    &models.WorkModel{Db: db},
 		todoModel:    &models.TodoModel{Db: db},

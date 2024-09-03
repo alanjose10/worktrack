@@ -1,14 +1,12 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/alanjose10/worktrack/internal/helpers"
-	"github.com/alanjose10/worktrack/internal/ui"
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 )
@@ -25,12 +23,14 @@ func buildRootCommand(app *application) *cobra.Command {
 	}
 
 	command.AddCommand(buildWhereCommand(app))
+	command.AddCommand(buildVersionCommand(app))
 	command.AddCommand(buildAddCommand(app))
-	command.AddCommand(buildStandupCommand(app))
 
 	command.AddCommand(buildListCommand(app))
 
-	command.AddCommand(buildTodoCommand(app))
+	// command.AddCommand(buildTodoCommand(app))
+
+	// command.AddCommand(buildStandupCommand(app))
 
 	return command
 
@@ -44,6 +44,21 @@ func buildWhereCommand(app *application) *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := fmt.Println(app.dataPath)
+			return err
+		},
+	}
+
+	return command
+}
+
+func buildVersionCommand(app *application) *cobra.Command {
+
+	command := &cobra.Command{
+		Use:   "version",
+		Short: "Print the version of the application",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, err := fmt.Println(app.version)
 			return err
 		},
 	}
@@ -274,57 +289,57 @@ func buildListCommand(app *application) *cobra.Command {
 	return command
 }
 
-func buildTodoCommand(app *application) *cobra.Command {
+// func buildTodoCommand(app *application) *cobra.Command {
 
-	var (
-		do   bool
-		undo bool
-	)
+// 	var (
+// 		do   bool
+// 		undo bool
+// 	)
 
-	command := &cobra.Command{
-		Use:   "todo --do|--undo",
-		Short: "Mark a todo item as done or undone",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+// 	command := &cobra.Command{
+// 		Use:   "todo --do|--undo",
+// 		Short: "Mark a todo item as done or undone",
+// 		Args:  cobra.NoArgs,
+// 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			fmt.Println(do, undo)
-			return nil
-		},
-	}
+// 			fmt.Println(do, undo)
+// 			return nil
+// 		},
+// 	}
 
-	command.Flags().BoolVar(&do, "do", false, "Mark a pending todo item as done")
-	command.Flags().BoolVar(&undo, "undo", false, "Mark a compoeted todo item as undone")
+// 	command.Flags().BoolVar(&do, "do", false, "Mark a pending todo item as done")
+// 	command.Flags().BoolVar(&undo, "undo", false, "Mark a compoeted todo item as undone")
 
-	command.MarkFlagsOneRequired("do", "undo")
-	command.MarkFlagsMutuallyExclusive("do", "undo")
+// 	command.MarkFlagsOneRequired("do", "undo")
+// 	command.MarkFlagsMutuallyExclusive("do", "undo")
 
-	return command
-}
+// 	return command
+// }
 
-func buildStandupCommand(app *application) *cobra.Command {
+// func buildStandupCommand(app *application) *cobra.Command {
 
-	var goBack int
+// 	var goBack int
 
-	command := &cobra.Command{
-		Use:   "standup",
-		Short: "Get a standup report",
-		Args:  cobra.NoArgs,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if goBack < 1 || goBack > 7 {
-				fmt.Println(ui.TextError("Invalid number of days to go back. Must be between 0 and 7"))
-				return errors.New("invalid number of days")
-			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+// 	command := &cobra.Command{
+// 		Use:   "standup",
+// 		Short: "Get a standup report",
+// 		Args:  cobra.NoArgs,
+// 		PreRunE: func(cmd *cobra.Command, args []string) error {
+// 			if goBack < 1 || goBack > 7 {
+// 				fmt.Println(ui.TextError("Invalid number of days to go back. Must be between 0 and 7"))
+// 				return errors.New("invalid number of days")
+// 			}
+// 			return nil
+// 		},
+// 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			fmt.Println(app.printStandupReport(goBack))
+// 			fmt.Println(app.printStandupReport(goBack))
 
-			return nil
-		},
-	}
+// 			return nil
+// 		},
+// 	}
 
-	command.Flags().IntVarP(&goBack, "back", "b", 2, "Number of days to go back")
+// 	command.Flags().IntVarP(&goBack, "back", "b", 2, "Number of days to go back")
 
-	return command
-}
+// 	return command
+// }

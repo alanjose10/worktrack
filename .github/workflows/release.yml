@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - dev
+      - main
 
 concurrency:
   group: ${{ github.ref }}
@@ -41,26 +41,5 @@ jobs:
         with:
           name: worktrack-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/worktrack-${{ matrix.goos }}-${{ matrix.goarch }}
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        goos: [ 'linux', 'windows', 'darwin' ]
-        goarch: [ 'amd64', 'arm64' ]
-
-    steps:
-
-      # - name: Checkout
-      #   uses: actions/checkout@v4
-
-      - name: Download binary artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: worktrack-${{ matrix.goos }}-${{ matrix.goarch }}
-
-      # - name: Create Release
-        
+          retention-days: 7
 
