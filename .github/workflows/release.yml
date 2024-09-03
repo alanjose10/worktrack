@@ -1,0 +1,46 @@
+name: Build and Release
+
+on:
+    push:
+        branches:
+            - 'dev'
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+        - uses: actions/checkout@v2
+        - name: Set up Go
+          uses: actions/setup-go@v2
+          with:
+            go-version: 1.23
+
+        - name: Build for Linux AMD64
+          run: GOOS=linux GOARCH=amd64 go build -o worktrack-linux-amd64 .
+
+        - name: Build for Linux ARM
+          run: GOOS=linux GOARCH=arm64 go build -o worktrack-linux-arm64 .
+
+        - name: Build for macOS
+          run: GOOS=darwin GOARCH=amd64 go build -o worktrack-darwin-amd64 .
+
+        - name: Build for macOS ARM
+          run: GOOS=darwin GOARCH=arm64 go build -o worktrack-darwin-arm64 .
+
+        - name: Build for Windows
+          run: GOOS=windows GOARCH=amd64 go build -o worktrack-windows-amd64.exe .
+
+        - name: Upload binary for MacOS AMD64
+          uses: actions/upload-artifact@v2
+          with:
+            name: worktrack-darwin-amd64
+            path: worktrack-darwin-amd64
+
+        - name: Upload binary for MacOS ARM
+          uses: actions/upload-artifact@v2
+          with:
+            name: worktrack-darwin-arm64
+            path: worktrack-darwin-arm64
+
+
