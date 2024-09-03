@@ -26,7 +26,7 @@ func GetConfigFilePath() string {
 func GetStorageDir(ts time.Time) string {
 	return filepath.Join(
 		GetWorktrackDir(),
-		fmt.Sprintf("%d/%d/%d", GetYear(ts), GetMonth(ts), GetDay(ts)),
+		fmt.Sprintf("%d/%d/%d", ts.Year(), ts.Month(), ts.Day()),
 	)
 }
 
