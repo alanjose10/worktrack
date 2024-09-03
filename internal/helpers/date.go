@@ -33,18 +33,6 @@ func ConvertToUnix(t time.Time) int64 {
 	return t.Unix()
 }
 
-func GetYear(t time.Time) int {
-	return t.Year()
-}
-
-func GetMonth(t time.Time) int {
-	return int(t.Month())
-}
-
-func GetDay(t time.Time) int {
-	return t.Day()
-}
-
 func ParseDate(date string) (time.Time, error) {
 	return time.Parse("02-01-2006", date)
 }
@@ -90,4 +78,34 @@ func IsThisMonth(t time.Time) bool {
 
 func IsThisYear(t time.Time) bool {
 	return t.Year() == GetCurrentDate().Year()
+}
+
+func GetMonthLongName(month time.Month) string {
+	switch month {
+	case time.January:
+		return "January"
+	case time.February:
+		return "February"
+	case time.March:
+		return "March"
+	case time.April:
+		return "April"
+	case time.May:
+		return "May"
+	case time.June:
+		return "June"
+	case time.July:
+		return "July"
+	case time.August:
+		return "August"
+	case time.September:
+		return "September"
+	case time.October:
+		return "October"
+	case time.November:
+		return "November"
+	case time.December:
+		return "December"
+	}
+	return "InvalidMonth"
 }
