@@ -78,3 +78,27 @@ func (m *BlockerModel) List() ([]Blocker, error) {
 	}
 	return blockers, nil
 }
+
+// List blockers between two dates
+func (m *BlockerModel) ListBetween(fromDate time.Time, toDate time.Time) ([]Blocker, error) {
+
+	sqlSmt := `SELECT id, content, added, resolved FROM blocker WHERE added BETWEEN ? AND ?`
+	rows, err := m.Db.Query(sqlSmt, fromDate, toDate)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var blockers []Blocker
+	for rows.Next() {
+		var b Blocker
+		err := rows.Scan(&b.ID, &b.Content, &b.Added, &b.Resolved)
+		if err != nil {
+			return nil, err
+		}
+		blockers = append(blockers, b)
+	}
+	return blockers, nil
+}

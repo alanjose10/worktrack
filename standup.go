@@ -124,7 +124,10 @@ func (app *application) printStandupReport(goBack int) string {
 
 		for _, day := range days {
 
-			workList, err := app.workModel.List(day)
+			from := helpers.GetDateFloor(day)
+			to := helpers.GetDateCeil(day)
+
+			workList, err := app.workModel.ListBetween(from, to)
 			if err != nil {
 				os.Exit(1)
 			}

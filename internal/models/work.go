@@ -54,13 +54,11 @@ func (m *WorkModel) Delete(id int) error {
 	return err
 }
 
-func (m *WorkModel) List(date time.Time) ([]Work, error) {
-
-	from := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.Local)
-	to := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 0, time.Local)
+// List todos between two dates
+func (m *WorkModel) ListBetween(fromDate time.Time, toDate time.Time) ([]Work, error) {
 
 	sqlSmt := `SELECT id, content, added FROM work WHERE added BETWEEN ? AND ?`
-	rows, err := m.Db.Query(sqlSmt, from, to)
+	rows, err := m.Db.Query(sqlSmt, fromDate, toDate)
 
 	if err != nil {
 		return nil, err

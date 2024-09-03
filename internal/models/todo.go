@@ -78,3 +78,27 @@ func (m *TodoModel) List() ([]Todo, error) {
 	}
 	return todos, nil
 }
+
+// List todos between two dates
+func (m *TodoModel) ListBetween(fromDate time.Time, toDate time.Time) ([]Todo, error) {
+
+	sqlSmt := `SELECT id, content, done, added FROM todo WHERE added BETWEEN ? AND ?`
+	rows, err := m.Db.Query(sqlSmt, fromDate, toDate)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var todos []Todo
+	for rows.Next() {
+		var t Todo
+		err := rows.Scan(&t.ID, &t.Content, &t.Done, &t.Added)
+		if err != nil {
+			return nil, err
+		}
+		todos = append(todos, t)
+	}
+	return todos, nil
+}

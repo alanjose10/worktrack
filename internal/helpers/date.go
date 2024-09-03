@@ -17,6 +17,14 @@ func GetCurrentDate() time.Time {
 	return time.Now()
 }
 
+func GetDateFloor(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
+}
+
+func GetDateCeil(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 0, time.Local)
+}
+
 func GetYesterdayDate() time.Time {
 	return GetCurrentDate().AddDate(0, 0, -1)
 }
@@ -64,4 +72,22 @@ func GetNPrevWorkingDays(start time.Time, n int) []time.Time {
 	}
 
 	return days
+}
+
+func IsToday(t time.Time) bool {
+	return t.Year() == GetCurrentDate().Year() && t.YearDay() == GetCurrentDate().YearDay()
+}
+
+func IsThisWeek(t time.Time) bool {
+	_, thisWeek := t.ISOWeek()
+	_, currentWeek := GetCurrentDate().ISOWeek()
+	return thisWeek == currentWeek
+}
+
+func IsThisMonth(t time.Time) bool {
+	return t.Year() == GetCurrentDate().Year() && t.Month() == GetCurrentDate().Month()
+}
+
+func IsThisYear(t time.Time) bool {
+	return t.Year() == GetCurrentDate().Year()
 }

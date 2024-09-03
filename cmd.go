@@ -30,6 +30,8 @@ func buildRootCommand(app *application) *cobra.Command {
 
 	command.AddCommand(buildListCommand(app))
 
+	command.AddCommand(buildTodoCommand(app))
+
 	return command
 
 }
@@ -49,6 +51,7 @@ func buildWhereCommand(app *application) *cobra.Command {
 	return command
 }
 
+// buildAddCommand creates a new cobra command to add a work, todo or blocker item
 func buildAddCommand(app *application) *cobra.Command {
 
 	var date time.Time
@@ -56,25 +59,37 @@ func buildAddCommand(app *application) *cobra.Command {
 	var yesterday bool
 	var dateStr string
 
-	var todo bool
-	var blocker bool
+	// var todo bool
+	// var blocker bool
+
+	var item = "work"
+	var promptInput = false
 
 	examples := `
-Add a work item using inline input
+Add a work item with inline input
 
 	worktrack add "Worked on documenting the APIs"
 
-Add a work item via prompt (An input prompt will be provided)
+Add a todo item with inline input
+
+	worktrack add todo "Update the README"
+
+Add a blocker item with inline input
+
+	worktrack add blocker "Waiting for the API keys from ops team"
+
+
+Add a work item using prompt
 
 	worktrack add
 
 Add a todo item
 
-	worktrack add --todo
+	worktrack add todo
 
 Add a blocker item
 
-	worktrack add --blocker
+	worktrack add blocker
 
 Add an item for yesterday
 
@@ -86,9 +101,9 @@ Add an item for a specific date
 	`
 
 	command := &cobra.Command{
-		Use:   "add WORK",
-		Short: "Add details of a work",
-		Args:  cobra.MaximumNArgs(1),
+		Use:   "add [todo|blocker] [text]",
+		Short: "Add items",
+		Args:  cobra.RangeArgs(0, 2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 
 			if yesterday {
@@ -102,22 +117,62 @@ Add an item for a specific date
 			} else {
 				date = helpers.GetCurrentDate()
 			}
+
+			if len(args) == 0 {
+				item = "work"
+				promptInput = true
+			} else if len(args) == 1 {
+				switch args[0] {
+				case "todo", "todos", "t":
+					{
+						item = "todo"
+						promptInput = true
+					}
+				case "blocker", "blockers", "block", "b":
+					{
+						item = "blocker"
+						promptInput = true
+					}
+				default:
+					{
+						item = "work"
+						promptInput = false
+					}
+				}
+			} else if len(args) == 2 {
+
+				switch args[0] {
+				case "todo", "todos", "t":
+					{
+						item = "todo"
+						promptInput = false
+					}
+				case "blocker", "blockers", "block", "b":
+					{
+						item = "blocker"
+						promptInput = false
+					}
+				default:
+					return fmt.Errorf("invalid item type %s", args[0])
+				}
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			var textInput string
-			if len(args) == 0 {
-
+			if promptInput {
 				err := huh.NewText().
 					TitleFunc(func() string {
-						if todo {
-							return "Please input the todo item."
+
+						switch item {
+						case "todo":
+							return "Add a todo item"
+						case "blocker":
+							return "Add a blocker item"
 						}
-						if blocker {
-							return "Please enter the blocker details."
-						}
-						return "Please enter the work item details."
+						return "Add a work item"
 					}, nil).
 					Value(&textInput).
 					Validate(func(s string) error {
@@ -133,32 +188,33 @@ Add an item for a specific date
 				}
 
 			} else {
-				textInput = args[0]
+
+				if item == "todo" || item == "blocker" {
+					textInput = args[1]
+				} else {
+					if args[0] == "help" {
+						return cmd.Help()
+					} else {
+						textInput = args[0]
+					}
+				}
 			}
 
-			if todo {
+			switch item {
+			case "todo":
 				return app.todoModel.Insert(textInput, date)
-			}
 
-			if blocker {
+			case "blocker":
 				return app.blockerModel.Insert(textInput, date)
 			}
-
 			return app.workModel.Insert(textInput, date)
-			// return nil
 		},
 		Example: examples,
 	}
 
 	command.Flags().BoolVarP(&yesterday, "yesterday", "y", false, "Add work for yesterday")
 	command.Flags().StringVarP(&dateStr, "date", "d", "", "Add work for a specific date (dd-mm-yyyy)")
-
-	command.Flags().BoolVar(&todo, "todo", false, "Add a todo item")
-	command.Flags().BoolVar(&blocker, "blocker", false, "Add a blocker item")
-
 	command.MarkFlagsMutuallyExclusive("yesterday", "date")
-
-	command.MarkFlagsMutuallyExclusive("todo", "blocker")
 
 	return command
 }
@@ -194,34 +250,44 @@ func buildStandupCommand(app *application) *cobra.Command {
 func buildListCommand(app *application) *cobra.Command {
 
 	var (
-		date time.Time
-		d    int
-		w    int
-		m    int
-		y    int
+		fromDate time.Time
+		d        int
+		w        int
+		m        int
+		y        int
 	)
 
 	command := &cobra.Command{
-		Use:   "list",
+		Use:   "list [todo|blocker] -d|-w|-m|-y",
 		Short: "List items",
-		Args:  cobra.NoArgs,
+		Args:  cobra.RangeArgs(0, 1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if d > 0 {
-				date = helpers.GetCurrentDate().AddDate(0, 0, -1*d)
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -1*d))
 			} else if w > 0 {
-				date = helpers.GetCurrentDate().AddDate(0, 0, -1*w*7)
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -1*w*7))
 			} else if m > 0 {
-				date = helpers.GetCurrentDate().AddDate(0, -1*m, 0)
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, -1*m, 0))
 			} else if y > 0 {
-				date = helpers.GetCurrentDate().AddDate(-1*y, 0, 0)
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(-1*y, 0, 0))
 			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			fmt.Println(app.listItems(helpers.GetCurrentDate(), date))
+			toDate := helpers.GetDateCeil(helpers.GetCurrentDate())
 
-			return nil
+			if len(args) == 1 {
+				switch args[0] {
+				case "todo", "todos", "t":
+					return app.listTodo(fromDate, toDate)
+				case "blocker", "blockers", "block", "b":
+					return app.listBlocker(fromDate, toDate)
+				}
+				return fmt.Errorf("invalid item type %s", args[0])
+			}
+			return app.listWork(fromDate, toDate)
 		},
 	}
 
@@ -232,6 +298,33 @@ func buildListCommand(app *application) *cobra.Command {
 
 	command.MarkFlagsOneRequired("days", "weeks", "months", "years")
 	command.MarkFlagsMutuallyExclusive("days", "weeks", "months", "years")
+
+	return command
+}
+
+func buildTodoCommand(app *application) *cobra.Command {
+
+	var (
+		do   bool
+		undo bool
+	)
+
+	command := &cobra.Command{
+		Use:   "todo --do|--undo",
+		Short: "Mark a todo item as done or undone",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			fmt.Println(do, undo)
+			return nil
+		},
+	}
+
+	command.Flags().BoolVar(&do, "do", false, "Mark a pending todo item as done")
+	command.Flags().BoolVar(&undo, "undo", false, "Mark a compoeted todo item as undone")
+
+	command.MarkFlagsOneRequired("do", "undo")
+	command.MarkFlagsMutuallyExclusive("do", "undo")
 
 	return command
 }
