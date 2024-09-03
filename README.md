@@ -25,6 +25,8 @@ WorkTrack is a command-line interface (CLI) tool designed to help you keep track
 - [Cobra](https://github.com/spf13/cobra)
 - [Viper](https://github.com/spf13/viper?tab=readme-ov-file)
 - [SQLite](https://www.sqlite.org/index.html)
+- Huh
+- Lipgloss
 
 
 
