@@ -22,6 +22,20 @@ var (
 				Foreground(tertiaryColor).
 				PaddingRight(1).
 				String()
+
+	blockerSymbol = lipgloss.
+			NewStyle().
+			SetString("[ ]").
+			Foreground(tertiaryColor).
+			PaddingRight(1).
+			String()
+
+	blockerResolvedSymbol = lipgloss.
+				NewStyle().
+				SetString("[☓]").
+				Foreground(tertiaryColor).
+				PaddingRight(1).
+				String()
 )
 
 func renderAddedOnDateByColor(d time.Time) string {
@@ -49,7 +63,7 @@ func renderAddedOnDateByColor(d time.Time) string {
 func renderTodoItem(t models.Todo) string {
 
 	contentText := lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}).
+		Foreground(neutralColor).
 		Render(t.Content)
 
 	if t.Done {
@@ -92,10 +106,11 @@ func renderWorkItem(w models.Work) string {
 	symbol := lipgloss.NewStyle().SetString("*").
 		Foreground(tertiaryColor).
 		PaddingRight(1).
+		Bold(true).
 		String()
 
 	contentText := lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}).
+		Foreground(neutralColor).
 		Render(w.Content)
 
 	return lipgloss.JoinHorizontal(0, symbol, " ", contentText)
@@ -123,4 +138,20 @@ func renderWorkItemGroup(groupName string, workItems []models.Work) string {
 		stringBuilder.WriteString(renderWorkItem(w) + "\n")
 	}
 	return stringBuilder.String()
+}
+
+func renderBlocker(b models.Blocker) string {
+
+	contentStyle := lipgloss.NewStyle().Foreground(neutralColor)
+
+	if b.Resolved {
+		contentStyle = contentStyle.Strikethrough(true)
+	}
+
+	contentText := contentStyle.Render(b.Content)
+
+	if b.Resolved {
+		return lipgloss.JoinHorizontal(0, blockerResolvedSymbol, " ", contentText, renderAddedOnDateByColor(b.Added))
+	}
+	return lipgloss.JoinHorizontal(0, blockerSymbol, " ", contentText, renderAddedOnDateByColor(b.Added))
 }

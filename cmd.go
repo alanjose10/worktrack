@@ -219,34 +219,6 @@ Add an item for a specific date
 	return command
 }
 
-func buildStandupCommand(app *application) *cobra.Command {
-
-	var goBack int
-
-	command := &cobra.Command{
-		Use:   "standup",
-		Short: "Get a standup report",
-		Args:  cobra.NoArgs,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if goBack < 1 || goBack > 7 {
-				fmt.Println(ui.TextError("Invalid number of days to go back. Must be between 0 and 7"))
-				return errors.New("invalid number of days")
-			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-
-			fmt.Println(app.printStandupReport(goBack))
-
-			return nil
-		},
-	}
-
-	command.Flags().IntVarP(&goBack, "back", "b", 2, "Number of days to go back")
-
-	return command
-}
-
 func buildListCommand(app *application) *cobra.Command {
 
 	var (
@@ -325,6 +297,34 @@ func buildTodoCommand(app *application) *cobra.Command {
 
 	command.MarkFlagsOneRequired("do", "undo")
 	command.MarkFlagsMutuallyExclusive("do", "undo")
+
+	return command
+}
+
+func buildStandupCommand(app *application) *cobra.Command {
+
+	var goBack int
+
+	command := &cobra.Command{
+		Use:   "standup",
+		Short: "Get a standup report",
+		Args:  cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if goBack < 1 || goBack > 7 {
+				fmt.Println(ui.TextError("Invalid number of days to go back. Must be between 0 and 7"))
+				return errors.New("invalid number of days")
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			fmt.Println(app.printStandupReport(goBack))
+
+			return nil
+		},
+	}
+
+	command.Flags().IntVarP(&goBack, "back", "b", 2, "Number of days to go back")
 
 	return command
 }
