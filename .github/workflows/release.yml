@@ -1,0 +1,63 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers the workflow only on version tags (e.g., v1.0.0)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.20  # Specify the Go version
+
+    - name: Build binary
+      run: |
+        mkdir -p dist
+        GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/worktrack-${{ matrix.goos }}-${{ matrix.goarch }}
+
+    - name: Upload binary
+      uses: actions/upload-artifact@v2
+      with:
+        name: worktrack-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: dist/worktrack-${{ matrix.goos }}-${{ matrix.goarch }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+        matrix:
+          goos: [linux, darwin, windows]
+          goarch: [amd64, arm64]
+          
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+      with:
+        path: dist/
+
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "dist/*"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        body: |
+          Release notes for version ${{ github.ref_name }}.
+          - Built on `GOOS`: ${{ matrix.goos }}
+          - Built on `GOARCH`: ${{ matrix.goarch }}
+        draft: false
+        prerelease: false
