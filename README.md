@@ -1,6 +1,10 @@
 # WorkTrack
 
-# Installation
+## Installation
+
+### Pre-requisite:
+
+- Install [golang](https://go.dev/doc/install)
 
 ```bash
 go install github.com/alanjose10/worktrack@<ref-name>
