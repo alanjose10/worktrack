@@ -6,7 +6,7 @@
 go install github.com/alanjose10/worktrack@<ref-name>
 
 Example:
-go install github.com/alanjose10/worktrack@v1.2.0
+go install github.com/alanjose10/worktrack@v1.2.1
 
 
 ```

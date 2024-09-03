@@ -95,7 +95,7 @@ func main() {
 	defer db.Close()
 
 	app := &application{
-		version:      "1.2.0",
+		version:      "1.2.1",
 		dataPath:     path,
 		workModel:    &models.WorkModel{Db: db},
 		todoModel:    &models.TodoModel{Db: db},
