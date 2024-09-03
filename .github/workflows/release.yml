@@ -21,15 +21,15 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.20  # Specify the Go version
+        go-version: 1.23
 
     - name: Build binary
       run: |
         mkdir -p dist
-        GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/worktrack-${{ matrix.goos }}-${{ matrix.goarch }}
+        GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/worktrack-${{ matrix.goos }}-${{ matrix.goarch }} .
 
     - name: Upload binary
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact
       with:
         name: worktrack-${{ matrix.goos }}-${{ matrix.goarch }}
         path: dist/worktrack-${{ matrix.goos }}-${{ matrix.goarch }}
