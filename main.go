@@ -94,8 +94,10 @@ func main() {
 	}
 	defer db.Close()
 
+	version := "1.3.0" // Define version as a constant at package level
+
 	app := &application{
-		version:      "1.2.1",
+		version:      version,
 		dataPath:     path,
 		workModel:    &models.WorkModel{Db: db},
 		todoModel:    &models.TodoModel{Db: db},
