@@ -36,6 +36,12 @@ func (m *TodoModel) CreateTable() error {
 	return nil
 }
 
+func (m *TodoModel) DeleteAll() error {
+	sqlSmt := `DELETE FROM todo`
+	_, err := m.Db.Exec(sqlSmt)
+	return err
+}
+
 func (m *TodoModel) Insert(todo string, date time.Time) error {
 	sqlSmt := `INSERT INTO todo 
 				(content, added) 

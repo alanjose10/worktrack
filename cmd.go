@@ -25,8 +25,8 @@ func buildRootCommand(app *application) *cobra.Command {
 	command.AddCommand(buildWhereCommand(app))
 	command.AddCommand(buildVersionCommand(app))
 	command.AddCommand(buildAddCommand(app))
-
 	command.AddCommand(buildListCommand(app))
+	command.AddCommand(buildCleanupCommand(app))
 
 	// command.AddCommand(buildTodoCommand(app))
 
@@ -47,6 +47,89 @@ func buildWhereCommand(app *application) *cobra.Command {
 			return err
 		},
 	}
+
+	return command
+}
+
+// Need a command to cleanup the database of all existing data
+func buildCleanupCommand(app *application) *cobra.Command {
+	var cleanWork, cleanTodo, cleanBlocker bool
+
+	command := &cobra.Command{
+		Use:   "cleanup",
+		Short: "Clean up the database of all existing data",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !cleanWork && !cleanTodo && !cleanBlocker {
+				cleanWork, cleanTodo, cleanBlocker = true, true, true
+			}
+
+			var confirm bool
+			prompt := huh.NewConfirm().
+				Description("This action cannot be undone.").
+				Value(&confirm).
+				TitleFunc(func() string {
+					title := "Are you sure you want to delete the selected data?"
+					title += " ("
+					if cleanWork {
+						title += "WORK, "
+					}
+					if cleanTodo {
+						title += "TODOS, "
+					}
+					if cleanBlocker {
+						title += "BLOCKERS, "
+					}
+					title = strings.TrimSuffix(title, ", ")
+					title += ")"
+					return title
+				}, nil).
+				Affirmative("Yes, delete").
+				Negative("No, cancel")
+
+			err := prompt.Run()
+			if err != nil {
+				return err
+			}
+
+			if !confirm {
+				fmt.Println("Cleanup cancelled.")
+				return nil
+			}
+
+			if cleanWork {
+				err = app.workModel.DeleteAll()
+				if err != nil {
+					return fmt.Errorf("failed to delete work items: %w", err)
+				}
+				fmt.Println("Work items deleted successfully.")
+			}
+
+			if cleanTodo {
+				err = app.todoModel.DeleteAll()
+				if err != nil {
+					return fmt.Errorf("failed to delete todo items: %w", err)
+				}
+				fmt.Println("Todo items deleted successfully.")
+			}
+
+			if cleanBlocker {
+				err = app.blockerModel.DeleteAll()
+				if err != nil {
+					return fmt.Errorf("failed to delete blocker items: %w", err)
+				}
+				fmt.Println("Blocker items deleted successfully.")
+			}
+
+			return nil
+		},
+	}
+
+	command.Flags().BoolVarP(&cleanWork, "work", "w", false, "Clean up work items")
+	command.Flags().BoolVarP(&cleanTodo, "todo", "t", false, "Clean up todo items")
+	command.Flags().BoolVarP(&cleanBlocker, "blocker", "b", false, "Clean up blocker items")
+
+	command.MarkFlagsOneRequired("work", "todo", "blocker")
 
 	return command
 }
