@@ -50,57 +50,57 @@ var (
 			PaddingRight(1).
 			String()
 
-	renderWorkItem = func(s string, width int) string {
-		return workItemSymbol + lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}).
-			Width(width).
-			Render(s)
-	}
-
 	doneTodoSymbol = lipgloss.NewStyle().SetString("[✓]").
 			Foreground(lipgloss.AdaptiveColor{Light: "#3B82F6", Dark: "#93C5FD"}).
 			PaddingRight(1).
 			String()
-
-	renderTodoItem = func(s string, width int) string {
-		return doneTodoSymbol + lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}).
-			Width(width).
-			Render(s)
-	}
 
 	pendingTodoSymbol = lipgloss.NewStyle().SetString("[ ]").
 				Foreground(lipgloss.AdaptiveColor{Light: "#3B82F6", Dark: "#93C5FD"}).
 				PaddingRight(1).
 				String()
 
-	renderPendingTodoItem = func(s string, width int) string {
-		return pendingTodoSymbol + lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#92400e", Dark: "#fcd34d"}).
-			Width(width).
-			Render(s)
-	}
-
 	blockerSymbol = lipgloss.NewStyle().SetString("X").
 			Foreground(lipgloss.AdaptiveColor{Light: "#3B82F6", Dark: "#93C5FD"}).
 			PaddingRight(1).
 			String()
-
-	renderBlockerItem = func(s string, width int) string {
-		return blockerSymbol + lipgloss.NewStyle().
-			Foreground(lipgloss.AdaptiveColor{Light: "#7f1d1d", Dark: "#f87171"}).
-			Width(width).
-			Render(s)
-	}
-
-	renderResolvedBlockerItem = func(s string, width int) string {
-		return blockerSymbol + lipgloss.NewStyle().
-			Strikethrough(true).
-			Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}).
-			Width(width).
-			Render(s)
-	}
 )
+
+func renderPendingTodoItem(s string, width int) string {
+	return pendingTodoSymbol + lipgloss.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{Light: "#92400e", Dark: "#fcd34d"}).
+		Width(width).
+		Render(s)
+}
+
+func renderTodoItem(s string, width int) string {
+	return doneTodoSymbol + lipgloss.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}).
+		Width(width).
+		Render(s)
+}
+
+func renderWorkItem(s string, width int) string {
+	return workItemSymbol + lipgloss.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}).
+		Width(width).
+		Render(s)
+}
+
+func renderBlockerItem(s string, width int) string {
+	return blockerSymbol + lipgloss.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{Light: "#7f1d1d", Dark: "#f87171"}).
+		Width(width).
+		Render(s)
+}
+
+func renderResolvedBlockerItem(s string, width int) string {
+	return blockerSymbol + lipgloss.NewStyle().
+		Strikethrough(true).
+		Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}).
+		Width(width).
+		Render(s)
+}
 
 func (app *application) printStandupReport(goBack int) string {
 
