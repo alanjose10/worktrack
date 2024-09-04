@@ -40,7 +40,9 @@ func BuildListTodoOutput(from time.Time, to time.Time, todos []models.Todo) stri
 
 	// Body
 	{
-		if len(todos) > 0 {
+		if len(todos) == 0 {
+			stringBuilder.WriteString("No todo items found\n")
+		} else {
 			for _, item := range todos {
 				stringBuilder.WriteString(renderTodoItem(item) + "\n")
 			}
@@ -91,7 +93,9 @@ func BuildListBlockerOutput(from time.Time, to time.Time, blockers []models.Bloc
 
 	// Body
 	{
-		if len(blockers) > 0 {
+		if len(blockers) == 0 {
+			stringBuilder.WriteString("No blockers found\n")
+		} else {
 			for _, item := range blockers {
 				stringBuilder.WriteString(renderBlocker(item) + "\n")
 			}
@@ -131,12 +135,9 @@ func BuildListWorkOutput(from time.Time, to time.Time, workItems []models.Work) 
 	}
 
 	// Body
-	{
-		if len(workItems) == 0 {
-			stringBuilder.WriteString("No work items found\n")
-			return stringBuilder.String()
-		}
-
+	if len(workItems) == 0 {
+		stringBuilder.WriteString("No work items found\n")
+	} else {
 		sort.Slice(workItems, func(i, j int) bool {
 			return workItems[i].Added.Before(workItems[j].Added)
 		})
@@ -144,19 +145,19 @@ func BuildListWorkOutput(from time.Time, to time.Time, workItems []models.Work) 
 		minDate := workItems[0].Added
 		maxDate := workItems[len(workItems)-1].Added
 
-		var groupdWorkItems map[string][]models.Work
-		if maxDate.Sub(minDate) > time.Hour*24*365 {
-			groupdWorkItems = groupWorkByYear(workItems)
-		} else if maxDate.Sub(minDate) > time.Hour*24*30 {
-			groupdWorkItems = groupWorkByMonth(workItems)
-		} else if maxDate.Sub(minDate) > 0 {
-			groupdWorkItems = groupWorkByDay(workItems)
+		var groupedWorkItems map[string][]models.Work
+		switch {
+		case maxDate.Sub(minDate) > time.Hour*24*365:
+			groupedWorkItems = groupWorkByYear(workItems)
+		case maxDate.Sub(minDate) > time.Hour*24*30:
+			groupedWorkItems = groupWorkByMonth(workItems)
+		case maxDate.Sub(minDate) > 0:
+			groupedWorkItems = groupWorkByDay(workItems)
 		}
 
-		for key, group := range groupdWorkItems {
+		for key, group := range groupedWorkItems {
 			stringBuilder.WriteString(renderWorkItemGroup(key, group) + "\n")
 		}
-
 	}
 
 	return stringBuilder.String()
