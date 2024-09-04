@@ -85,12 +85,6 @@ func BuildListBlockerOutput(from time.Time, to time.Time, blockers []models.Bloc
 		return blockers[i].Added.Before(blockers[j].Added)
 	})
 
-	// minDate := blockers[0].Added
-	// maxDate := blockers[len(blockers)-1].Added
-
-	// fmt.Printf("minDate: %v\n", minDate)
-	// fmt.Printf("maxDate: %v\n", maxDate)
-
 	// Body
 	{
 		if len(blockers) == 0 {
