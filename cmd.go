@@ -80,41 +80,6 @@ func buildAddCommand(app *application) *cobra.Command {
 	var item = "work"
 	var promptInput = false
 
-	examples := `
-Add a work item with inline input
-
-	worktrack add "Worked on documenting the APIs"
-
-Add a todo item with inline input
-
-	worktrack add todo "Update the README"
-
-Add a blocker item with inline input
-
-	worktrack add blocker "Waiting for the API keys from ops team"
-
-
-Add a work item using prompt
-
-	worktrack add
-
-Add a todo item
-
-	worktrack add todo
-
-Add a blocker item
-
-	worktrack add blocker
-
-Add an item for yesterday
-
-	worktrack add -y
-
-Add an item for a specific date
-
-	worktrack add --date 20-10-1994
-	`
-
 	command := &cobra.Command{
 		Use:   "add [todo|blocker] [text]",
 		Short: "Add items",
@@ -224,7 +189,7 @@ Add an item for a specific date
 			}
 			return app.workModel.Insert(textInput, date)
 		},
-		Example: examples,
+		Example: addCmdExamples,
 	}
 
 	command.Flags().BoolVarP(&yesterday, "yesterday", "y", false, "Add work for yesterday")
@@ -235,34 +200,32 @@ Add an item for a specific date
 }
 
 func buildListCommand(app *application) *cobra.Command {
-
 	var (
-		fromDate time.Time
-		d        int
-		w        int
-		m        int
-		y        int
+		fromDate   time.Time
+		d, w, m, y int
 	)
 
 	command := &cobra.Command{
-		Use:   "list [todo|blocker] -d|-w|-m|-y",
-		Short: "List items",
-		Args:  cobra.RangeArgs(0, 1),
+		Use:     "list [todo|blocker] -d|-w|-m|-y",
+		Short:   "List items",
+		Example: listCmdExamples,
+		Args:    cobra.RangeArgs(0, 1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if d > 0 {
-				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -1*d))
-			} else if w > 0 {
-				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -1*w*7))
-			} else if m > 0 {
-				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, -1*m, 0))
-			} else if y > 0 {
-				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(-1*y, 0, 0))
+			switch {
+			case d > 0:
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -d))
+			case w > 0:
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -w*7))
+			case m > 0:
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, -m, 0))
+			case y > 0:
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(-y, 0, 0))
+			default:
+				return fmt.Errorf("no time range specified")
 			}
-
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			toDate := helpers.GetDateCeil(helpers.GetCurrentDate())
 
 			if len(args) == 1 {
@@ -271,8 +234,9 @@ func buildListCommand(app *application) *cobra.Command {
 					return app.listTodo(fromDate, toDate)
 				case "blocker", "blockers", "block", "b":
 					return app.listBlocker(fromDate, toDate)
+				default:
+					return fmt.Errorf("invalid item type %s", args[0])
 				}
-				return fmt.Errorf("invalid item type %s", args[0])
 			}
 			return app.listWork(fromDate, toDate)
 		},
