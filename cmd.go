@@ -28,7 +28,7 @@ func buildRootCommand(app *application) *cobra.Command {
 	command.AddCommand(buildListCommand(app))
 	command.AddCommand(buildCleanupCommand(app))
 
-	// command.AddCommand(buildTodoCommand(app))
+	command.AddCommand(buildTodoCommand(app))
 
 	// command.AddCommand(buildStandupCommand(app))
 
@@ -336,32 +336,63 @@ func buildListCommand(app *application) *cobra.Command {
 	return command
 }
 
-// func buildTodoCommand(app *application) *cobra.Command {
+func buildTodoCommand(app *application) *cobra.Command {
 
-// 	var (
-// 		do   bool
-// 		undo bool
-// 	)
+	var (
+		do       bool
+		undo     bool
+		fromDate time.Time
+		d        int
+		w        int
+		m        int
+		y        int
+	)
 
-// 	command := &cobra.Command{
-// 		Use:   "todo --do|--undo",
-// 		Short: "Mark a todo item as done or undone",
-// 		Args:  cobra.NoArgs,
-// 		RunE: func(cmd *cobra.Command, args []string) error {
+	command := &cobra.Command{
+		Use:   "todo --do|--undo -d|-w|-m|-y",
+		Short: "Mark a todo item as done or undone",
+		Args:  cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if d > 0 {
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -1*d))
+			} else if w > 0 {
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -1*w*7))
+			} else if m > 0 {
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, -1*m, 0))
+			} else if y > 0 {
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(-1*y, 0, 0))
+			}
 
-// 			fmt.Println(do, undo)
-// 			return nil
-// 		},
-// 	}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
 
-// 	command.Flags().BoolVar(&do, "do", false, "Mark a pending todo item as done")
-// 	command.Flags().BoolVar(&undo, "undo", false, "Mark a compoeted todo item as undone")
+			toDate := helpers.GetDateCeil(helpers.GetCurrentDate())
 
-// 	command.MarkFlagsOneRequired("do", "undo")
-// 	command.MarkFlagsMutuallyExclusive("do", "undo")
+			if do {
+				app.doTodo(fromDate, toDate)
+			} else if undo {
+				app.undoTodo(fromDate, toDate)
+			}
+		},
+	}
 
-// 	return command
-// }
+	command.Flags().BoolVar(&do, "do", false, "Mark a pending todo item as done")
+	command.Flags().BoolVar(&undo, "undo", false, "Mark a compoeted todo item as undone")
+
+	command.MarkFlagsOneRequired("do", "undo")
+	command.MarkFlagsMutuallyExclusive("do", "undo")
+
+	command.Flags().IntVarP(&d, "days", "d", 3, "Go back n days")
+	command.Flags().IntVarP(&w, "weeks", "w", 0, "Go back n weeks")
+	command.Flags().IntVarP(&m, "months", "m", 0, "Go back n months")
+	command.Flags().IntVarP(&y, "years", "y", 0, "Go back n years")
+
+	command.MarkFlagsOneRequired("days", "weeks", "months", "years")
+	command.MarkFlagsMutuallyExclusive("days", "weeks", "months", "years")
+
+	return command
+}
 
 // func buildStandupCommand(app *application) *cobra.Command {
 

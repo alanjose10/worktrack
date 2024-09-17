@@ -42,6 +42,17 @@ func (m *TodoModel) DeleteAll() error {
 	return err
 }
 
+func (m *TodoModel) GetById(id int) (Todo, error) {
+	sqlSmt := `SELECT id, content, done, added FROM todo WHERE id = ?`
+	row := m.Db.QueryRow(sqlSmt, id)
+	var t Todo
+	err := row.Scan(&t.ID, &t.Content, &t.Done, &t.Added)
+	if err != nil {
+		return Todo{}, err
+	}
+	return t, nil
+}
+
 func (m *TodoModel) Insert(todo string, date time.Time) error {
 	sqlSmt := `INSERT INTO todo 
 				(content, added) 
@@ -52,7 +63,7 @@ func (m *TodoModel) Insert(todo string, date time.Time) error {
 
 func (m *TodoModel) Update(t Todo) error {
 	sqlSmt := `UPDATE todo SET content = ?, done = ? WHERE id = ?`
-	_, err := m.Db.Exec(sqlSmt, t.Content, t.Done, t.Added, t.ID)
+	_, err := m.Db.Exec(sqlSmt, t.Content, t.Done, t.ID)
 	return err
 }
 
