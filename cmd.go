@@ -294,6 +294,11 @@ func buildListCommand(app *application) *cobra.Command {
 		Example: listCmdExamples,
 		Args:    cobra.RangeArgs(0, 1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+
+			if d == 0 && w == 0 && m == 0 && y == 0 {
+				d = 7
+			}
+
 			switch {
 			case d > 0:
 				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -d))
@@ -330,7 +335,6 @@ func buildListCommand(app *application) *cobra.Command {
 	command.Flags().IntVarP(&m, "months", "m", 0, "Go back n months")
 	command.Flags().IntVarP(&y, "years", "y", 0, "Go back n years")
 
-	command.MarkFlagsOneRequired("days", "weeks", "months", "years")
 	command.MarkFlagsMutuallyExclusive("days", "weeks", "months", "years")
 
 	return command
@@ -353,6 +357,11 @@ func buildTodoCommand(app *application) *cobra.Command {
 		Short: "Mark a todo item as done or undone",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+
+			if d == 0 && w == 0 && m == 0 && y == 0 {
+				d = 7
+			}
+
 			if d > 0 {
 				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -1*d))
 			} else if w > 0 {
@@ -383,12 +392,11 @@ func buildTodoCommand(app *application) *cobra.Command {
 	command.MarkFlagsOneRequired("do", "undo")
 	command.MarkFlagsMutuallyExclusive("do", "undo")
 
-	command.Flags().IntVarP(&d, "days", "d", 3, "Go back n days")
+	command.Flags().IntVarP(&d, "days", "d", 0, "Go back n days")
 	command.Flags().IntVarP(&w, "weeks", "w", 0, "Go back n weeks")
 	command.Flags().IntVarP(&m, "months", "m", 0, "Go back n months")
 	command.Flags().IntVarP(&y, "years", "y", 0, "Go back n years")
 
-	command.MarkFlagsOneRequired("days", "weeks", "months", "years")
 	command.MarkFlagsMutuallyExclusive("days", "weeks", "months", "years")
 
 	return command
