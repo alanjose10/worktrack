@@ -8,7 +8,6 @@ import (
 
 	"github.com/alanjose10/worktrack/internal/models"
 	_ "github.com/mattn/go-sqlite3"
-	gap "github.com/muesli/go-app-paths"
 )
 
 type application struct {
@@ -20,24 +19,13 @@ type application struct {
 }
 
 func setupPath() string {
-	// get XDG paths
-	scope := gap.NewScope(gap.User, "worktrack")
-	dirs, err := scope.DataDirs()
+
+	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var taskDir string
-	if len(dirs) > 0 {
-		taskDir = dirs[0]
-	} else {
-		taskDir, err = os.UserHomeDir()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-	}
-
+	taskDir := filepath.Join(userHomeDir, ".worktrack")
 	if _, err := os.Stat(taskDir); err != nil {
 		if os.IsNotExist(err) {
 			os.Mkdir(taskDir, 0o770)
@@ -94,8 +82,10 @@ func main() {
 	}
 	defer db.Close()
 
+	version := "1.3.0" // Define version as a constant at package level
+
 	app := &application{
-		version:      "1.2.1",
+		version:      version,
 		dataPath:     path,
 		workModel:    &models.WorkModel{Db: db},
 		todoModel:    &models.TodoModel{Db: db},

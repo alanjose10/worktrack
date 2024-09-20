@@ -36,6 +36,12 @@ func (m *BlockerModel) CreateTable() error {
 	return nil
 }
 
+func (m *BlockerModel) DeleteAll() error {
+	sqlSmt := `DELETE FROM blocker`
+	_, err := m.Db.Exec(sqlSmt)
+	return err
+}
+
 func (m *BlockerModel) Insert(blocker string, date time.Time) error {
 	sqlSmt := `INSERT INTO blocker 
 				(content, added) 

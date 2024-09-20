@@ -34,6 +34,12 @@ func (m *WorkModel) CreateTable() error {
 	return nil
 }
 
+func (m *WorkModel) DeleteAll() error {
+	sqlSmt := `DELETE FROM work`
+	_, err := m.Db.Exec(sqlSmt)
+	return err
+}
+
 func (m *WorkModel) Insert(work string, date time.Time) error {
 	sqlSmt := `INSERT INTO work 
 				(content, added) 

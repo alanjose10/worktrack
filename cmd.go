@@ -25,10 +25,10 @@ func buildRootCommand(app *application) *cobra.Command {
 	command.AddCommand(buildWhereCommand(app))
 	command.AddCommand(buildVersionCommand(app))
 	command.AddCommand(buildAddCommand(app))
-
 	command.AddCommand(buildListCommand(app))
+	command.AddCommand(buildCleanupCommand(app))
 
-	// command.AddCommand(buildTodoCommand(app))
+	command.AddCommand(buildTodoCommand(app))
 
 	// command.AddCommand(buildStandupCommand(app))
 
@@ -47,6 +47,89 @@ func buildWhereCommand(app *application) *cobra.Command {
 			return err
 		},
 	}
+
+	return command
+}
+
+// Need a command to cleanup the database of all existing data
+func buildCleanupCommand(app *application) *cobra.Command {
+	var cleanWork, cleanTodo, cleanBlocker bool
+
+	command := &cobra.Command{
+		Use:   "cleanup",
+		Short: "Clean up the database of all existing data",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !cleanWork && !cleanTodo && !cleanBlocker {
+				cleanWork, cleanTodo, cleanBlocker = true, true, true
+			}
+
+			var confirm bool
+			prompt := huh.NewConfirm().
+				Description("This action cannot be undone.").
+				Value(&confirm).
+				TitleFunc(func() string {
+					title := "Are you sure you want to delete the selected data?"
+					title += " ("
+					if cleanWork {
+						title += "WORK, "
+					}
+					if cleanTodo {
+						title += "TODOS, "
+					}
+					if cleanBlocker {
+						title += "BLOCKERS, "
+					}
+					title = strings.TrimSuffix(title, ", ")
+					title += ")"
+					return title
+				}, nil).
+				Affirmative("Yes, delete").
+				Negative("No, cancel")
+
+			err := prompt.Run()
+			if err != nil {
+				return err
+			}
+
+			if !confirm {
+				fmt.Println("Cleanup cancelled.")
+				return nil
+			}
+
+			if cleanWork {
+				err = app.workModel.DeleteAll()
+				if err != nil {
+					return fmt.Errorf("failed to delete work items: %w", err)
+				}
+				fmt.Println("Work items deleted successfully.")
+			}
+
+			if cleanTodo {
+				err = app.todoModel.DeleteAll()
+				if err != nil {
+					return fmt.Errorf("failed to delete todo items: %w", err)
+				}
+				fmt.Println("Todo items deleted successfully.")
+			}
+
+			if cleanBlocker {
+				err = app.blockerModel.DeleteAll()
+				if err != nil {
+					return fmt.Errorf("failed to delete blocker items: %w", err)
+				}
+				fmt.Println("Blocker items deleted successfully.")
+			}
+
+			return nil
+		},
+	}
+
+	command.Flags().BoolVarP(&cleanWork, "work", "w", false, "Clean up work items")
+	command.Flags().BoolVarP(&cleanTodo, "todo", "t", false, "Clean up todo items")
+	command.Flags().BoolVarP(&cleanBlocker, "blocker", "b", false, "Clean up blocker items")
+
+	command.MarkFlagsOneRequired("work", "todo", "blocker")
 
 	return command
 }
@@ -79,41 +162,6 @@ func buildAddCommand(app *application) *cobra.Command {
 
 	var item = "work"
 	var promptInput = false
-
-	examples := `
-Add a work item with inline input
-
-	worktrack add "Worked on documenting the APIs"
-
-Add a todo item with inline input
-
-	worktrack add todo "Update the README"
-
-Add a blocker item with inline input
-
-	worktrack add blocker "Waiting for the API keys from ops team"
-
-
-Add a work item using prompt
-
-	worktrack add
-
-Add a todo item
-
-	worktrack add todo
-
-Add a blocker item
-
-	worktrack add blocker
-
-Add an item for yesterday
-
-	worktrack add -y
-
-Add an item for a specific date
-
-	worktrack add --date 20-10-1994
-	`
 
 	command := &cobra.Command{
 		Use:   "add [todo|blocker] [text]",
@@ -224,7 +272,7 @@ Add an item for a specific date
 			}
 			return app.workModel.Insert(textInput, date)
 		},
-		Example: examples,
+		Example: addCmdExamples,
 	}
 
 	command.Flags().BoolVarP(&yesterday, "yesterday", "y", false, "Add work for yesterday")
@@ -235,8 +283,73 @@ Add an item for a specific date
 }
 
 func buildListCommand(app *application) *cobra.Command {
+	var (
+		fromDate   time.Time
+		d, w, m, y int
+	)
+
+	command := &cobra.Command{
+		Use:   "list [todo|blocker] -d|-w|-m|-y",
+		Short: "List items",
+		Long: `
+List work items, todo items or blocker items.
+You can specify the number of days, weeks, months or years to go back to list the items.
+
+If no time range is specified, it will default to 7 days.`,
+		Example: listCmdExamples,
+		Args:    cobra.RangeArgs(0, 1),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+
+			if d == 0 && w == 0 && m == 0 && y == 0 {
+				d = 7
+			}
+
+			switch {
+			case d > 0:
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -d))
+			case w > 0:
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -w*7))
+			case m > 0:
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, -m, 0))
+			case y > 0:
+				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(-y, 0, 0))
+			default:
+				return fmt.Errorf("no time range specified")
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			toDate := helpers.GetDateCeil(helpers.GetCurrentDate())
+
+			if len(args) == 1 {
+				switch args[0] {
+				case "todo", "todos", "t":
+					return app.listTodo(fromDate, toDate)
+				case "blocker", "blockers", "block", "b":
+					return app.listBlocker(fromDate, toDate)
+				default:
+					return fmt.Errorf("invalid item type %s", args[0])
+				}
+			}
+			return app.listWork(fromDate, toDate)
+		},
+	}
+
+	command.Flags().IntVarP(&d, "days", "d", 0, "Go back n days")
+	command.Flags().IntVarP(&w, "weeks", "w", 0, "Go back n weeks")
+	command.Flags().IntVarP(&m, "months", "m", 0, "Go back n months")
+	command.Flags().IntVarP(&y, "years", "y", 0, "Go back n years")
+
+	command.MarkFlagsMutuallyExclusive("days", "weeks", "months", "years")
+
+	return command
+}
+
+func buildTodoCommand(app *application) *cobra.Command {
 
 	var (
+		do       bool
+		undo     bool
 		fromDate time.Time
 		d        int
 		w        int
@@ -245,10 +358,20 @@ func buildListCommand(app *application) *cobra.Command {
 	)
 
 	command := &cobra.Command{
-		Use:   "list [todo|blocker] -d|-w|-m|-y",
-		Short: "List items",
-		Args:  cobra.RangeArgs(0, 1),
+		Use:   "todo --do|--undo -d|-w|-m|-y",
+		Short: "Mark a todo item as done or undone",
+		Long: `
+Mark a todo item as done or undone. 
+You can specify the number of days, weeks, months or years to go back to find the todo item to mark as done or undone. 
+
+If no time range is specified, it will default to 7 days.`,
+		Args: cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+
+			if d == 0 && w == 0 && m == 0 && y == 0 {
+				d = 7
+			}
+
 			if d > 0 {
 				fromDate = helpers.GetDateFloor(helpers.GetCurrentDate().AddDate(0, 0, -1*d))
 			} else if w > 0 {
@@ -261,60 +384,33 @@ func buildListCommand(app *application) *cobra.Command {
 
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 
 			toDate := helpers.GetDateCeil(helpers.GetCurrentDate())
 
-			if len(args) == 1 {
-				switch args[0] {
-				case "todo", "todos", "t":
-					return app.listTodo(fromDate, toDate)
-				case "blocker", "blockers", "block", "b":
-					return app.listBlocker(fromDate, toDate)
-				}
-				return fmt.Errorf("invalid item type %s", args[0])
+			if do {
+				app.doTodo(fromDate, toDate)
+			} else if undo {
+				app.undoTodo(fromDate, toDate)
 			}
-			return app.listWork(fromDate, toDate)
 		},
 	}
+
+	command.Flags().BoolVar(&do, "do", false, "Mark a pending todo item as done")
+	command.Flags().BoolVar(&undo, "undo", false, "Mark a compoeted todo item as undone")
+
+	command.MarkFlagsOneRequired("do", "undo")
+	command.MarkFlagsMutuallyExclusive("do", "undo")
 
 	command.Flags().IntVarP(&d, "days", "d", 0, "Go back n days")
 	command.Flags().IntVarP(&w, "weeks", "w", 0, "Go back n weeks")
 	command.Flags().IntVarP(&m, "months", "m", 0, "Go back n months")
 	command.Flags().IntVarP(&y, "years", "y", 0, "Go back n years")
 
-	command.MarkFlagsOneRequired("days", "weeks", "months", "years")
 	command.MarkFlagsMutuallyExclusive("days", "weeks", "months", "years")
 
 	return command
 }
-
-// func buildTodoCommand(app *application) *cobra.Command {
-
-// 	var (
-// 		do   bool
-// 		undo bool
-// 	)
-
-// 	command := &cobra.Command{
-// 		Use:   "todo --do|--undo",
-// 		Short: "Mark a todo item as done or undone",
-// 		Args:  cobra.NoArgs,
-// 		RunE: func(cmd *cobra.Command, args []string) error {
-
-// 			fmt.Println(do, undo)
-// 			return nil
-// 		},
-// 	}
-
-// 	command.Flags().BoolVar(&do, "do", false, "Mark a pending todo item as done")
-// 	command.Flags().BoolVar(&undo, "undo", false, "Mark a compoeted todo item as undone")
-
-// 	command.MarkFlagsOneRequired("do", "undo")
-// 	command.MarkFlagsMutuallyExclusive("do", "undo")
-
-// 	return command
-// }
 
 // func buildStandupCommand(app *application) *cobra.Command {
 
