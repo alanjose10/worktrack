@@ -289,8 +289,13 @@ func buildListCommand(app *application) *cobra.Command {
 	)
 
 	command := &cobra.Command{
-		Use:     "list [todo|blocker] -d|-w|-m|-y",
-		Short:   "List items",
+		Use:   "list [todo|blocker] -d|-w|-m|-y",
+		Short: "List items",
+		Long: `
+List work items, todo items or blocker items.
+You can specify the number of days, weeks, months or years to go back to list the items.
+
+If no time range is specified, it will default to 7 days.`,
 		Example: listCmdExamples,
 		Args:    cobra.RangeArgs(0, 1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -355,7 +360,12 @@ func buildTodoCommand(app *application) *cobra.Command {
 	command := &cobra.Command{
 		Use:   "todo --do|--undo -d|-w|-m|-y",
 		Short: "Mark a todo item as done or undone",
-		Args:  cobra.NoArgs,
+		Long: `
+Mark a todo item as done or undone. 
+You can specify the number of days, weeks, months or years to go back to find the todo item to mark as done or undone. 
+
+If no time range is specified, it will default to 7 days.`,
+		Args: cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 
 			if d == 0 && w == 0 && m == 0 && y == 0 {

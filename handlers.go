@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -48,65 +49,167 @@ func (app *application) doTodo(from time.Time, to time.Time) error {
 		return fmt.Errorf("error listing todos: %w", err)
 	}
 
-	doneItems := []string{}
-	huh.NewMultiSelect[string]().
-		Height(10).
-		OptionsFunc(func() []huh.Option[string] {
-			var opts []huh.Option[string]
-			for _, todo := range todos {
-				if !todo.Done {
-					opts = append(opts, huh.NewOption(todo.Content, fmt.Sprintf("%d", todo.ID)))
-				}
+	var selectedTodoId string
+	var confirm bool
+	// var textInput string
 
-			}
-			return opts
-		}, nil).
-		Title("Please select an item to mark as done. (Use SPACE to select)").
-		Value(&doneItems).
-		Limit(1).
-		Run()
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Height(10).
+				OptionsFunc(func() []huh.Option[string] {
+					var opts []huh.Option[string]
+					for _, todo := range todos {
+						if !todo.Done {
+							opts = append(opts, huh.NewOption(todo.Content, fmt.Sprintf("%d", todo.ID)))
+						}
 
-	if len(doneItems) > 0 {
+					}
+					return opts
+				}, nil).
+				Title("Please select the todo item to mark as done").
+				Value(&selectedTodoId),
+		),
+		huh.NewGroup(
+			huh.NewConfirm().
+				Value(&confirm).
+				Title("Are you sure you want to mark this item as done?").
+				Validate(func(b bool) error {
+					if !b {
+						os.Exit(0)
+					}
+					return nil
+				}).
+				Affirmative("Yes!").
+				Negative("No."),
+		),
+		// huh.NewGroup(
+		// 	huh.NewText().
+		// 		Title("Do you want to add the completed todo to work items?").
+		// 		Value(&textInput).
+		// 		Placeholder(fmt.Sprintf("Completed: %s", selectedTodoId)).
+		// 		PlaceholderFunc(func() string {
+		// 			for _, todo := range todos {
+		// 				if fmt.Sprintf("%d", todo.ID) == selectedTodoId {
+		// 					return fmt.Sprintf("Completed: %s", todo.Content)
+		// 				}
 
-		idInt, err := strconv.Atoi(doneItems[0])
-		if err != nil {
-			return fmt.Errorf("error converting id to int: %w", err)
-		}
-		todo, err := app.todoModel.GetById(idInt)
-		if err != nil {
-			return fmt.Errorf("error getting todo by id: %w", err)
-		}
+		// 			}
+		// 			return ""
+		// 		}, &selectedTodoId).
+		// 		Validate(func(s string) error {
+		// 			if s == "" {
+		// 				return fmt.Errorf("please provide a valid text")
+		// 			}
+		// 			return nil
+		// 		}),
+		// ),
+	)
 
-		var confirm bool
-		prompt := huh.NewConfirm().
-			Description(todo.Content).
-			Value(&confirm).
-			TitleFunc(func() string {
-				title := "Are you sure you want to mark this item as done?"
-				return title
-			}, nil).
-			Affirmative("Yes!").
-			Negative("No.")
+	err = form.Run()
 
-		err = prompt.Run()
-		if err != nil {
-			return err
-		}
-
-		if !confirm {
-			return nil
-		}
-		todo.Done = true
-		err = app.todoModel.Update(todo)
-		if err != nil {
-			return fmt.Errorf("error updating todo: %w", err)
-		}
+	if err != nil {
+		return fmt.Errorf("something went wrong: %s", err)
 	}
+
+	if !confirm {
+		return nil
+	}
+
+	selectedTodoIdInt, err := strconv.Atoi(selectedTodoId)
+	if err != nil {
+		return fmt.Errorf("error converting id to int: %w", err)
+	}
+	selectedTodo, err := app.todoModel.GetById(selectedTodoIdInt)
+	if err != nil {
+		return fmt.Errorf("error getting todo by id: %w", err)
+	}
+
+	selectedTodo.Done = true
+	err = app.todoModel.Update(selectedTodo)
+	if err != nil {
+		return fmt.Errorf("error updating todo: %w", err)
+	}
+
+	// textInput = fmt.Sprintf("%s (added via todo completion)", textInput)
+	// err = app.workModel.Insert(textInput, helpers.GetCurrentDate())
+	// if err != nil {
+	// 	return fmt.Errorf("error inserting work: %w", err)
+	// }
+
+	fmt.Fprintf(os.Stdout, "Todo item marked as done: %s\n", selectedTodo.Content)
 
 	return nil
 }
 
 func (app *application) undoTodo(from time.Time, to time.Time) error {
+
+	todos, err := app.todoModel.ListBetween(from, to)
+	if err != nil {
+		return fmt.Errorf("error listing todos: %w", err)
+	}
+
+	var selectedTodoId string
+	var confirm bool
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Height(10).
+				OptionsFunc(func() []huh.Option[string] {
+					var opts []huh.Option[string]
+					for _, todo := range todos {
+						if todo.Done {
+							opts = append(opts, huh.NewOption(todo.Content, fmt.Sprintf("%d", todo.ID)))
+						}
+
+					}
+					return opts
+				}, nil).
+				Title("Please select the todo item to mark as undone").
+				Value(&selectedTodoId),
+		),
+		huh.NewGroup(
+			huh.NewConfirm().
+				Value(&confirm).
+				Title("Are you sure you want to mark this item as undone?").
+				Validate(func(b bool) error {
+					if !b {
+						os.Exit(0)
+					}
+					return nil
+				}).
+				Affirmative("Yes!").
+				Negative("No."),
+		),
+	)
+
+	err = form.Run()
+
+	if err != nil {
+		return fmt.Errorf("something went wrong: %s", err)
+	}
+
+	if !confirm {
+		return nil
+	}
+
+	selectedTodoIdInt, err := strconv.Atoi(selectedTodoId)
+	if err != nil {
+		return fmt.Errorf("error converting id to int: %w", err)
+	}
+	selectedTodo, err := app.todoModel.GetById(selectedTodoIdInt)
+	if err != nil {
+		return fmt.Errorf("error getting todo by id: %w", err)
+	}
+
+	selectedTodo.Done = false
+	err = app.todoModel.Update(selectedTodo)
+	if err != nil {
+		return fmt.Errorf("error updating todo: %w", err)
+	}
+
+	fmt.Fprintf(os.Stdout, "Todo item marked as undone: %s\n", selectedTodo.Content)
 
 	return nil
 }
